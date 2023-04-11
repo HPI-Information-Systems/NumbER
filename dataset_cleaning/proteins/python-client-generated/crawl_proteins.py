@@ -20,7 +20,6 @@ try:
     all_elements = holding_service.get_current_entry_ids()
     print("Got all elements", file=sys.stdout)
     for idx, element in enumerate(all_elements):
-        print("Processing element", file=sys.stdout)
         try:
             entry = entry_service.get_entry_by_id(element)
             group_ids.add(entry.rcsb_entry_container_identifiers.rcsb_id)
