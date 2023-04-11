@@ -15,9 +15,12 @@ entry_id = 'entry_id_example' # str | ENTRY ID of the entry.
 assembly_id = 'assembly_id_example' # str | ASSEMBLY ID of the biological assembly candidate.
 
 group_ids = set()
+print("Starting", file=sys.stdout)
 try:
     all_elements = holding_service.get_current_entry_ids()
+    print("Got all elements", file=sys.stdout)
     for idx, element in enumerate(all_elements):
+        print("Processing element", file=sys.stdout)
         try:
             entry = entry_service.get_entry_by_id(element)
             group_ids.add(entry.rcsb_entry_container_identifiers.rcsb_id)
