@@ -17,10 +17,14 @@ group_ids = set()
 try:
     all_elements = holding_service.get_current_entry_ids()
     for idx, element in enumerate(all_elements):
-        entry = entry_service.get_entry_by_id(element)
-        group_ids.add(entry.rcsb_entry_container_identifiers.rcsb_id)
-        if idx == 50:
-            break
+        try:
+            entry = entry_service.get_entry_by_id(element)
+            group_ids.add(entry.rcsb_entry_container_identifiers.rcsb_id)
+        except Exception as e:
+            print("Has no group_id or request failed")
+            print("Error: ", e)
+        if idx % 1000 == 0:
+            print("Processed: ", idx)
     group_ids = np.array(list(group_ids))
     np.savetxt('test.csv', group_ids, delimiter=',') 
 except ApiException as e:
