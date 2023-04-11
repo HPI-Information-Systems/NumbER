@@ -1,0 +1,2 @@
+# Hinweis
+Die kategorischen Variablen sind noch nicht kodiert. Dies hat den Hintergrund, eine Spalte mehrere Kategorien enthalten kann. Da wäre viel preprocessing notwendig. Vlt gibt es einen besseren Weg. Für später.
