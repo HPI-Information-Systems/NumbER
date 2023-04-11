@@ -26,6 +26,6 @@ try:
         if idx % 1000 == 0:
             print("Processed: ", idx)
     group_ids = np.array(list(group_ids))
-    np.savetxt('test.csv', group_ids, delimiter=',') 
+    np.savetxt('test.csv', group_ids, delimiter=',',fmt='%s') 
 except ApiException as e:
     print("Exception when calling AssemblyServiceApi->get_assembly_by_id: %s\n" % e)
