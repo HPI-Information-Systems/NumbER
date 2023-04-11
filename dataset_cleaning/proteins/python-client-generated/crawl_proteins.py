@@ -4,6 +4,7 @@ import swagger_client
 from swagger_client.rest import ApiException
 import time
 import numpy as np
+import sys
 
 # create an instance of the API class
 apiClient = swagger_client.ApiClient()
@@ -21,11 +22,11 @@ try:
             entry = entry_service.get_entry_by_id(element)
             group_ids.add(entry.rcsb_entry_container_identifiers.rcsb_id)
         except Exception as e:
-            print("Has no group_id or request failed")
-            print("Error: ", e)
-        if idx % 1000 == 0:
-            print("Processed: ", idx)
-            group_ids = np.array(list(group_ids))
+            print("Has no group_id or request failed", file=sys.stdout)
+            print(f"Error: {e}", file=sys.stdout)
+        if idx % 100 == 0:
+            print(f"Processed:  {idx}", file=sys.stdout)
+            #group_ids = np.array(list(group_ids))
     group_ids = np.array(list(group_ids))
     np.savetxt('test.csv', group_ids, delimiter=',',fmt='%s') 
 except ApiException as e:
