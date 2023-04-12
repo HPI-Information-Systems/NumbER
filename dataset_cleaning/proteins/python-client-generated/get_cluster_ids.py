@@ -29,13 +29,12 @@ try:
                 print("entity_id", entity_id, file=sys.stdout)
                 try:
                     clusters = entity_service.get_polymer_entity_by_id(entry_id, entity_id).rcsb_cluster_membership
-                    print(clusters)
-                    group_ids.update([cluster.cluster_id for cluster in clusters if cluster.identity == '100'])
+                    group_ids.update([f"{cluster.cluster_id}_100" for cluster in clusters if cluster.identity == 100])
+                    print(group_ids)
                 except Exception as e:
                     print("Has no group_id or request failed", file=sys.stdout)
                     print(f"Error: {e}", file=sys.stdout)
-                if idx % 1000 == 0:
-                    print(f"Processed:  {idx}", file=sys.stdout)
+            
                     #group_ids = np.array(list(group_ids))
     group_ids = np.array(list(group_ids))
     np.savetxt('cluster_ids.csv', group_ids, delimiter=',',fmt='%s') 
