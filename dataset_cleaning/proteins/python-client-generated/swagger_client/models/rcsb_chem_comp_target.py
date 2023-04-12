@@ -192,11 +192,11 @@ class RcsbChemCompTarget(object):
         :type: str
         """
         allowed_values = ["DrugBank", "PDB Primary Data"]  # noqa: E501
-        if provenance_source not in allowed_values:
-            raise ValueError(
-                "Invalid value for `provenance_source` ({0}), must be one of {1}"  # noqa: E501
-                .format(provenance_source, allowed_values)
-            )
+        # if provenance_source not in allowed_values:
+        #     raise ValueError(
+        #         "Invalid value for `provenance_source` ({0}), must be one of {1}"  # noqa: E501
+        #         .format(provenance_source, allowed_values)
+        #     )
 
         self._provenance_source = provenance_source
 

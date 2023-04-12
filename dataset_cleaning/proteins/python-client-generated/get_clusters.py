@@ -15,10 +15,30 @@ entry_id = 'entry_id_example' # str | ENTRY ID of the entry.
 assembly_id = 'assembly_id_example' # str | ASSEMBLY ID of the biological assembly candidate.
 
 print("Starting", file=sys.stdout)
+def remove_numeric_suffix(input_string):
+    # Split the string at the underscore
+    parts = input_string.rsplit('_', 1)
+
+    # Check if the last part consists of numbers
+    if len(parts) > 1 and parts[-1].isdigit():
+        # Remove the last part (including the underscore)
+        result = parts[0]
+    else:
+        result = input_string
+    return result
+
+# Test the function with different input strings
+#input_strings = ["1A00_1", "4WJG", "AF_AFP69906F1_1", "example_text_123", "example_text_not_numbers"]
+
 try:
     all_elements = holding_service.get_current_entry_ids()
     for element in all_elements:
-    group_ids = np.array(list(group_ids))
-    np.savetxt('test.csv', group_ids, delimiter=',',fmt='%s') 
+        def get_member_id(element):
+            return remove_numeric_suffix(element)#.split(r"_")[0]
+        group = list(map(get_member_id, group_service.get_polymer_entity_group_by_id("110_100").rcsb_group_container_identifiers.group_member_ids))
+        print(group)
+        break
+    #group_ids = np.array(list(group_ids))
+    #np.savetxt('test.csv', group_ids, delimiter=',',fmt='%s') 
 except ApiException as e:
     print("Exception when calling AssemblyServiceApi->get_assembly_by_id: %s\n" % e)
