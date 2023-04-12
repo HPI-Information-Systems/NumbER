@@ -21,7 +21,6 @@ try:
     all_elements = holding_service.get_current_entry_ids()
     print("Got all elements", file=sys.stdout)
     for idx, element in enumerate(all_elements):
-        element = "2BVK"
         element = entry_service.get_entry_by_id(element)
         entry_id = element.entry.id
         print("entry_id", entry_id, file=sys.stdout)
