@@ -23,14 +23,14 @@ try:
     for idx, element in enumerate(all_elements):
         element = entry_service.get_entry_by_id(element)
         entry_id = element.entry.id
-        print("entry_id", entry_id, file=sys.stdout)
+        #print("entry_id", entry_id, file=sys.stdout)
         if element.rcsb_entry_container_identifiers.polymer_entity_ids != None:
             for entity_id in element.rcsb_entry_container_identifiers.polymer_entity_ids:
-                print("entity_id", entity_id, file=sys.stdout)
+                #print("entity_id", entity_id, file=sys.stdout)
                 try:
                     clusters = entity_service.get_polymer_entity_by_id(entry_id, entity_id).rcsb_cluster_membership
                     group_ids.update([f"{cluster.cluster_id}_100" for cluster in clusters if cluster.identity == 100])
-                    print(group_ids)
+                    #print(group_ids)
                 except Exception as e:
                     print("Has no group_id or request failed", file=sys.stdout)
                     print(f"Error: {e}", file=sys.stdout)
