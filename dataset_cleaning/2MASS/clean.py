@@ -9,7 +9,7 @@ def read_file(path, columns_path):
 	columns = list(map(get_columns, columns))
 	df = pd.read_csv(path, sep='|', names=columns)
 	return df
-xsc = read_file('/hpi/fs00/share/fg/naumann/lukas.laskowski/2MASS/samples/xsc/100_xsc.csv', 'xsc_columns')
+xsc = read_file('/hpi/fs00/share/fg/naumann/lukas.laskowski/2MASS/samples/xsc/100_xsc', 'xsc_columns')
 psc = read_file('/hpi/fs00/share/fg/naumann/lukas.laskowski/2MASS/samples/100_2MASS.txt', 'psc_columns')
 xsc['source'] = 'xsc'
 psc['source'] = 'psc'
