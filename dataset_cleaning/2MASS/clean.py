@@ -35,3 +35,4 @@ for row in all_stars[all_stars['source']=='psc'].iterrows(all_stars):
     idx_psc = row.loc[:,0].index
     groundtruth.append((idx_xsc, idx_psc))
 groundtruth = pd.DataFrame(groundtruth, columns=['xsc', 'psc'])
+groundtruth.to_csv('groundtruth.csv', index=False)
