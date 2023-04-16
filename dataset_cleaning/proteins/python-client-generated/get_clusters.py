@@ -44,11 +44,15 @@ try:
     for cluster_id in tqdm(all_cluster_ids):
         def get_member_id(element):
             return remove_numeric_suffix(element)#.split(r"_")[0]
-        ids = group_service.get_polymer_entity_group_by_id(cluster_id).rcsb_group_container_identifiers.group_member_ids
-        if len(ids) <= 1:
-            continue
-        group = list(map(get_member_id, ids))
-        all_groups[cluster_id]=group
+        try:
+            ids = group_service.get_polymer_entity_group_by_id(cluster_id).rcsb_group_container_identifiers.group_member_ids
+            if len(ids) <= 1:
+                continue
+            group = list(map(get_member_id, ids))
+            all_groups[cluster_id]=group
+        except Exception as e:
+            print("Has no group_id or request failed", file=sys.stdout)
+            print(f"Error: {e}", file=sys.stdout)
     #np.array(all_groups)
     with open("all_clusters.json", "w") as f:
         json.dump(all_groups, f)
