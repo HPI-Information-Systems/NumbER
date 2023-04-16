@@ -1,6 +1,8 @@
 from __future__ import print_function
 import time
 import swagger_client
+from tqdm import tqdm
+
 from swagger_client.rest import ApiException
 import time
 import numpy as np
@@ -24,22 +26,29 @@ def remove_numeric_suffix(input_string):
     if len(parts) > 1 and parts[-1].isdigit():
         # Remove the last part (including the underscore)
         result = parts[0]
+        suffix = parts[1]
     else:
         result = input_string
-    return result
+        suffix = None
+    return [result, suffix]
 
 # Test the function with different input strings
 #input_strings = ["1A00_1", "4WJG", "AF_AFP69906F1_1", "example_text_123", "example_text_not_numbers"]
 
 try:
     #all_elements = holding_service.get_current_entry_ids()
-    all_groups =[]
-    all_cluster_ids = np.genfromtxt('my_file.csv', delimiter=',')
-    for cluster_id in all_cluster_ids:
+    all_groups ={}
+    all_cluster_ids = np.genfromtxt('cluster_ids.csv', delimiter='\n', dtype=str)
+    print(all_cluster_ids)
+    #all_cluster_ids = ["110_100"]
+    for cluster_id in tqdm(all_cluster_ids):
         def get_member_id(element):
             return remove_numeric_suffix(element)#.split(r"_")[0]
-        group = list(map(get_member_id, group_service.get_polymer_entity_group_by_id("110_100").rcsb_group_container_identifiers.group_member_ids))
-        all_groups.append(group)
+        ids = group_service.get_polymer_entity_group_by_id(cluster_id).rcsb_group_container_identifiers.group_member_ids
+        if len(ids) <= 1:
+            continue
+        group = list(map(get_member_id, ids))
+        all_groups[cluster_id]=group
     #np.array(all_groups)
     with open("all_clusters.json", "w") as f:
         json.dump(all_groups, f)
