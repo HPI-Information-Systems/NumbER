@@ -49,3 +49,4 @@ for idx,row in psc.iterrows():
     groundtruth.append((xsc_row.index[0], idx))
 groundtruth = pd.DataFrame(groundtruth, columns=['xsc', 'psc'])
 groundtruth.to_csv('groundtruth.csv', index=False)
+all_stars.to_csv('all_stars.csv', index=False)
