@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 #def read_psc(path):
 #    return df
 
@@ -10,8 +11,9 @@ def read_file(path, columns_path):
 	print(columns)
 	df = pd.read_csv(path, sep='|', names=columns)
 	return df
-xsc = read_file('xsc_sample', 'xsc_columns')
-psc = read_file('psc_sample', 'psc_columns')
+base_path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/2MASS/samples/"
+xsc = read_file(os.path.join(base_path, 'xsc', '100_xsc'), 'xsc_columns')
+psc = read_file(os.path.join(base_path, '100_2MASS.txt'), 'psc_columns')
 #print(psc.columns)
 #print(xsc.columns)
 xsc['source'] = 'xsc'
