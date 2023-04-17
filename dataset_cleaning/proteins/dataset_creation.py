@@ -1,10 +1,10 @@
 import pandas as pd
 import os
 import json
-path_to_dogsite = ""
-path_to_pdb_files = ""
+path_to_dogsite = "~/Masterarbeit/DogSite3/all_nodes\=linux64ubuntu/dogsite_3.0.0/dogsite/"
+path_to_pdb_files = "./mock_files/pdb-files"
 path_to_duplicate_clusters = ""
-output_path = ""
+output_path = "./mock_files"
 
 with open("all_clusters.json", "r") as f:
     clusters = json.load(f)
