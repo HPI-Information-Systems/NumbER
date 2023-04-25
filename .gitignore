@@ -4,7 +4,8 @@ dataset_cleaning/alaska/notebook/**/*
 dataset_cleaning/alaska/BoomBoomChicken-finalist/env/*
 *.data
 *.vscode
-
+*.json
+*.pth
 
 #official python gitignore
 # Byte-compiled / optimized / DLL files
