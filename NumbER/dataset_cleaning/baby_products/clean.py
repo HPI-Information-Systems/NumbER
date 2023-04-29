@@ -74,6 +74,9 @@ df_2['right_instance_id'] = np.nan
 df_1['left_instance_id'] = np.nan
 
 df = pd.concat([df_1, df_2], ignore_index=True)
+all_data = pd.concat([pd.read_csv('./baby_products/csv_files/babies_r_us.csv'), pd.read_csv('./baby_products/csv_files/buy_buy_baby.csv')]).drop(columns=['int_id', 'ext_id'])
+all_data['id'] = all_data.index
+all_data.to_csv('./baby_products_all_features.csv', index=False)
 gold_standard_old = pd.read_csv('./baby_products/csv_files/labeled_data.csv')
 gold_standard = pd.DataFrame(columns=['left_instance_id', 'right_instance_id', 'label'])
 for idx, row in gold_standard_old.iterrows():
@@ -82,7 +85,12 @@ for idx, row in gold_standard_old.iterrows():
     status = row['product_is_match']
     gold_standard = gold_standard.append({'left_instance_id': left_id, 'right_instance_id': right_id, 'label': status}, ignore_index=True)
 gold_standard.to_csv('./baby_products_matches.csv', index=False)
-df[['width', 'height', 'length', 'weight_lb', 'weight_oz', 'price', 'is_discounted']].to_csv('./baby_products_features.csv',index_label='instance_id')
+df.rename(columns={'instance_id': 'id'}, inplace=True)
+print(df.columns)
+df[['width', 'height', 'length', 'weight_lb', 'weight_oz', 'price', 'is_discounted']].to_csv('./baby_products_features.csv')
+matches = pd.read_csv('./baby_products_matches.csv').rename(columns={'left_instance_id': 'p1', 'right_instance_id': 'p2', 'label': 'prediction'})
+matches = matches[matches['prediction'] == 1]
+matches.to_csv('./baby_products_matches.csv', index=False)
     #print("Left id",left_id)
     #print("Right id", right_id)
     #df.loc[df['left_instance_id'] == row.left_instance_id, 'right_instance_id'] = row.right_instance_id

@@ -150,4 +150,16 @@ X['cpu_brand_refine'] = le.fit_transform(X['cpu_brand_refine'])
 X['core_refine'] = le.fit_transform(X['core_refine'])
 
 #X=X[['instance_id','title','cpu_brand_refine','core_refine','frequency_refine','model_refine','ram_refine','storage_refine','brand_refine','gram_3']]
-X[["instance_id", "weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]].to_csv('X3_features.csv', index=False)
+X = X[["instance_id", "weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]]
+old_features = pd.read_csv('./X3.csv')
+old_features.drop(columns=['instance_id'], inplace=True)
+old_features['id'] = old_features.index
+old_features.to_csv('x3_all_features.csv', index=False)
+matches = pd.read_csv('Y3.csv')
+X['id'] = X.index
+#matches['p1'] = matches[matches['left_instance_id'] == X['instance_id']]
+matches = matches.merge(X, left_on="left_instance_id",right_on="instance_id", how="left")[['id', 'right_instance_id', 'label']].rename(columns={'id':'p1'}).merge(X, left_on="right_instance_id",right_on="instance_id", how="left")[['p1','id','label']].rename(columns={'id': 'p2', 'label':'prediction'})
+X.drop('instance_id', axis=1, inplace=True)
+X.to_csv('x3_features.csv', index=False)
+matches.to_csv('matches.csv', index=False)
+#X=X[['instance_id','title','cpu_brand_refine'

@@ -48,12 +48,16 @@ df_1['left_instance_id'] = np.nan
 
 df = pd.concat([df_1, df_2], ignore_index=True)
 gold_standard_old = pd.read_csv('./movies1/csv_files/labeled_data.csv')
-gold_standard = pd.DataFrame(columns=['left_instance_id', 'right_instance_id', 'label'])
+gold_standard = pd.DataFrame(columns=['p1', 'p2', 'prediction'])
 for idx, row in gold_standard_old.iterrows():
     left_id = df[df['left_instance_id']==row["ltable.Id"]].index.values[0]
     right_id = df[df['right_instance_id']==row["rtable.Id"]].index.values[0]#.to_csv('./temp.csv')#.idx.values[0]
     status = row['gold']
-    gold_standard = gold_standard.append({'left_instance_id': left_id, 'right_instance_id': right_id, 'label': status}, ignore_index=True)
-
-df.drop(["Id", "left_instance_id", "right_instance_id"], axis="columns").to_csv('./movies1_features.csv',index_label='instance_id')
+    gold_standard = gold_standard.append({'p1': left_id, 'p2': right_id, 'prediction': status}, ignore_index=True)
+    
+#gold_standard['prediction'] = gold_standard['prediction'].apply(lambda x: 1 if x == '1' else 0)
+print(gold_standard.to_csv('./temp.csv'))
+gold_standard = gold_standard[gold_standard['prediction'] == 1]
+df.rename(columns={'instance_id': 'id'}, inplace=True)
+df.drop(["Id", "left_instance_id", "right_instance_id"], axis="columns").to_csv('./movies1_features.csv', index=False)
 gold_standard.to_csv('./movies1_matches.csv', index=False)

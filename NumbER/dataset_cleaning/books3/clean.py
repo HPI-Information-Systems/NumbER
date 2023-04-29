@@ -25,7 +25,9 @@ def extract_dimensions_barnes(dimensions_str):
 
 df_1 = pd.read_csv('./books3/csv_files/barnes_and_noble.csv') #l_id
 df_2 = pd.read_csv('./books3/csv_files/half.csv') #r_id
-
+all_data = pd.concat([pd.read_csv('./books3/csv_files/barnes_and_noble.csv'), pd.read_csv('./books3/csv_files/half.csv')]).drop(columns=['ID'])
+all_data['id'] = all_data.index
+all_data.to_csv('./books3_all_features.csv', index=False)
 df_1['Price'] = df_1['Price'].str.replace("$", "").astype(float)
 df_2['UsedPrice'] = df_2['UsedPrice'].str.replace("$", "").astype(float)
 df_2['NewPrice'] = df_2['NewPrice'].str.replace("$", "").astype(float)
@@ -57,10 +59,14 @@ for idx, row in gold_standard_old.iterrows():
     right_id = df[df['right_instance_id']==row["rtable.ID"]].index.values[0]#.to_csv('./temp.csv')#.idx.values[0]
     status = row['gold']
     gold_standard = gold_standard.append({'left_instance_id': left_id, 'right_instance_id': right_id, 'label': status}, ignore_index=True)
-
-df.drop(["ID", "left_instance_id", "right_instance_id"], axis="columns").to_csv('./books3_features.csv',index_label='instance_id')
+df.rename(columns={'instance_id': 'id'}, inplace=True)
+df = df.drop(["ID", "left_instance_id", "right_instance_id"], axis="columns")
+df['id'] = df.index
+df.to_csv('./books3_features.csv', index=False)
 gold_standard.to_csv('./books3_matches.csv', index=False)
-
+matches = pd.read_csv('./books3_matches.csv').rename(columns={'left_instance_id': 'p1', 'right_instance_id': 'p2', 'label': 'prediction'})
+matches = matches[matches['prediction'] == 1]
+matches.to_csv('./books3_matches.csv', index=False)
 
 #df_1[['ID', 'Price', 'Pages','ISBN13', 'Publisher', 'height', 'width', 'length']].to_csv('./barnes_and_noble_numeric.csv', index=False)
 #df_1[['ID', 'Price', 'Pages','ISBN13', 'height', 'width', 'length']].to_csv('./barnes_and_noble_numeric_without_categoric.csv', index=False)

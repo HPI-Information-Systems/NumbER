@@ -135,7 +135,6 @@ if('source0__16900' in X['instance_id']):
     X.loc[X['instance_id']=='source0__14091','title']=X[X['instance_id']=='source0__16900']['title'].iloc[0]
 
 X['ram_refine'] = X['ram_refine'].str.replace("gb", "").replace("", np.nan).astype(float)
-print("s")
 X['storage_refine'] = X['storage_refine'].str.replace("gb", "").replace("", np.nan).astype(float)
 X['frequency_refine'] = X['frequency_refine'].str.replace(r"[^\d|\.]*", "").replace("", np.nan).astype(float)
 
@@ -143,7 +142,19 @@ le = preprocessing.LabelEncoder()
 X['brand_refine'] = le.fit_transform(X['brand_refine'])
 X['cpu_brand_refine'] = le.fit_transform(X['cpu_brand_refine'])
 X['core_refine'] = le.fit_transform(X['core_refine'])
-X[["instance_id", "weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]].to_csv('x2_features.csv', index=False)
+X = X[["instance_id", "weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]]
+X['id'] = X.index
+old_features = pd.read_csv('./X2.csv')
+old_features.drop(columns=['instance_id'], inplace=True)
+old_features['id'] = old_features.index
+old_features.to_csv('x2_all_features.csv', index=False)
+matches = pd.read_csv('Y2.csv')
+X['id'] = X.index
+#matches['p1'] = matches[matches['left_instance_id'] == X['instance_id']]
+matches = matches.merge(X, left_on="left_instance_id",right_on="instance_id", how="left")[['id', 'right_instance_id', 'label']].rename(columns={'id':'p1'}).merge(X, left_on="right_instance_id",right_on="instance_id", how="left")[['p1','id','label']].rename(columns={'id': 'p2', 'label':'prediction'})
+X.drop('instance_id', axis=1, inplace=True)
+X.to_csv('x2_features.csv', index=False)
+matches.to_csv('matches.csv', index=False)
 #X=X[['instance_id','title','cpu_brand_refine','core_refine','frequency_refine','model_refine','ram_refine','storage_refine','brand_refine','gram_3']]
 #X[['dimensions', 'height', 'width', 'length']].to_csv('./temp.csv', index=False)
 #dimensions_X.columns = ['height', 'length', 'width']
