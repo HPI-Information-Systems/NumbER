@@ -1,10 +1,15 @@
 import pandas as pd
-from column import Column
+from NumbER.matching_solutions.md2m.column import Column
+from NumbER.matching_solutions.md2m.table import Table
 
-for col in df.itercols():
-    p_c = calculate_p_c(col)
-    if p_c < 0.05:
-        #column will not be considered as comparison column
+df = pd.read_csv("~/Masterarbeit/NumbER/NumbER/dataset_cleaning/earthquakes/earthquakes_associated_us.csv")
+columns = []
+for col in df:
+    try:
+        df[col].astype(float)
+    except Exception as e:
+        print(e)
         continue
-    
-
+    columns.append(Column(col, df[col]))
+table = Table("Table1", columns, df)
+table.calculate_candidates()

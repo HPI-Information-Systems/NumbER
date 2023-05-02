@@ -27,11 +27,14 @@ def multiple_sources(df):
                 for j in range(i+1, len(cluster)):
                     pairs.append((cluster[i], cluster[j]))
     groundtruth = pd.DataFrame(pairs, columns=['p1', 'p2'])
+    groundtruth['prediction'] = 1
     return groundtruth
 
                     
 earthquakes = pd.read_csv('temp.csv')
 #groundtruth = two_sources(earthquakes)
 groundtruth = multiple_sources(earthquakes)
+earthquakes.drop(columns=['event_id', 'time','longitude','latitude', 'datasource'], inplace=True)
+earthquakes['id'] = earthquakes.index
 groundtruth.to_csv('groundtruth_associated_us.csv', index=False)
-earthquakes.to_csv('earthquakes_associated_us.csv')
+earthquakes.to_csv('earthquakes_associated_us.csv', index=False)
