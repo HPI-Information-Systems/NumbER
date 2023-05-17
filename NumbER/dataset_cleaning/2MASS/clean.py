@@ -20,7 +20,9 @@ xsc['source'] = 'xsc'
 psc['source'] = 'psc'
 #rename columns for xsc
 #xsc.drop(['ext_key'], inplace=True, axis=1)
-psc[psc["ext_key"]=="\\N"] = -1
+psc.loc[psc["ext_key"]=="\\N", "ext_key"] = -1
+print(psc['ext_key'].tail())
+print(psc['ext_key'].head())
 psc["ext_key"] = psc["ext_key"].astype(int)
 
 #xsc["ext_key"]=xsc["ext_key"].astype(str)
@@ -36,7 +38,6 @@ xsc.rename(columns={'j_msig_k20fe': 'j_msigcom',
 psc = psc[['source','ext_key', 'ra', 'decl','designation','glat', 'glon','hemis','date','jdate', 'j_m', 'j_msigcom', 'h_m', 'h_msigcom', 'k_m', 'k_msigcom']]
 #return
 xsc = xsc[['source', 'ext_key','ra', 'decl','designation','glat', 'glon','hemis','date','jdate', 'j_m', 'j_msigcom', 'h_m', 'h_msigcom', 'k_m', 'k_msigcom']]
-
 all_stars = pd.concat([xsc, psc])
 all_stars.reset_index(inplace=True, drop=True)
 groundtruth = []

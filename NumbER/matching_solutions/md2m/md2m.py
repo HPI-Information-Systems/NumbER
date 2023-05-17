@@ -8,8 +8,9 @@ for col in df:
     try:
         df[col].astype(float)
     except Exception as e:
-        print(e)
+        #print(e)
         continue
     columns.append(Column(col, df[col]))
 table = Table("Table1", columns, df)
-table.calculate_candidates()
+result = table.calculate_candidates()
+result.to_csv('./result.csv')

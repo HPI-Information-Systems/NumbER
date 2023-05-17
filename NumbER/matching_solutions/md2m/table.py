@@ -1,6 +1,8 @@
 import typing
 import pandas as pd
-
+import numpy as np
+from tqdm import tqdm
+import itertools
 from NumbER.matching_solutions.md2m.column import Column
 
 class Table():
@@ -14,26 +16,26 @@ class Table():
         self.data = data
     
     def similarity(self, a, b):
-        #print(a)
-        #print("S", b.at['longitude'])
-        #a,b sind zwei records
         sum = 0
         maximum_p_c = max(self.comparison_cols, key=lambda x: x.p_c).p_c
         for column in self.comparison_cols:
             a_value = a.at[column.name]
             b_value = b.at[column.name]
-            print(column.p_c)
+            if np.isnan(a_value) or np.isnan(b_value): # type(a_value) != float and type(a_value) != int or type(b_value) != float and type(b_value) != int:
+                continue
             sum += (column.p_c/maximum_p_c) * column.column_similarity(a_value,b_value)
         return sum / len(self.comparison_cols)
 
     def calculate_candidates(self):
         result = []
-        for idx_a, row_a in self.data.iterrows():
-            for idx_b, row_b in self.data.iterrows():
-                if idx_a != idx_b:
-                    sim = self.similarity(row_a, row_b)
-                    print("h",sim)
-                    result.append({'p1': idx_a, 'p2': idx_b, 'sim': sim})
+        print(len(self.data))
+        combinations = itertools.combinations(self.data.index, 2)
+        for i,j in tqdm(combinations):
+            row_a = self.data.loc[i]
+            row_b = self.data.loc[j]
+            #if i != j:
+            sim = self.similarity(row_a, row_b)
+            result.append({'p1': i, 'p2': j, 'sim': sim})
         return pd.DataFrame(result, index=None)
                     
                 

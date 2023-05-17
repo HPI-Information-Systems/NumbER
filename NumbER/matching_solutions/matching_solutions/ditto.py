@@ -19,7 +19,7 @@ class DittoMatchingSolution(MatchingSolution):
         super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
         self.file_format = 'ditto'
         
-    def model_train(self, run_id, batch_size, max_len, lr, n_epochs, lm, fp16, size=None, da=None, dk=None, summarize=None):
+    def model_train(self, run_id, batch_size, max_len, lr, n_epochs, lm, fp16,i, size=None, da=None, dk=None, summarize=None):
         random.seed(run_id)
         np.random.seed(run_id)
         torch.manual_seed(run_id)
@@ -56,18 +56,18 @@ class DittoMatchingSolution(MatchingSolution):
                                     size=size,
                                     da=da)
         valid_dataset = DittoDataset(self.valid_path, lm=lm)
-        #test_dataset = DittoDataset(testset, lm=lm)
         start_time = time.time()
         best_f1, model, threshold = train(train_dataset, valid_dataset, batch_size, lm, lr, n_epochs, fp16)
         return best_f1, model, threshold, time.time() - start_time
         
     def model_predict(self, model, batch_size, lm, max_len,summarizer=None, dk_injector=None, threshold=None):
+        print("Doing it with threshold: ", threshold)
         test_dataset = DittoDataset(self.test_path, lm=lm)
         test_iter = data.DataLoader(dataset=test_dataset,
                                  batch_size=batch_size*16,
                                  shuffle=False,
                                  num_workers=0,
                                  collate_fn=test_dataset.pad) #stimmt das so?
-        f1, _ = evaluate(model, test_iter)
+        f1 = evaluate(model, test_iter, threshold)
         return {'predict': predict(self.test_path, self.dataset_name, model, batch_size, summarizer, lm, max_len, dk_injector, threshold), 'evaluate': f1}
     

@@ -20,7 +20,9 @@ class Column():
     def __get_p_c(self):
         if type(self.col.max()) != np.float64 and type(self.col.max()) != float:
             return 0
+        print("s",self.scale)
         return (pow(10,self.scale) * (self.col.max()-self.col.min())) / len(self.col)
+        #return s
     
     def get_similarity_vector(self):
         pass
