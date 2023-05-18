@@ -57,6 +57,7 @@ class DittoMatchingSolution(MatchingSolution):
                                     da=da)
         valid_dataset = DittoDataset(self.valid_path, lm=lm)
         start_time = time.time()
+        print("Starting training")
         best_f1, model, threshold = train(train_dataset, valid_dataset, batch_size, lm, lr, n_epochs, fp16)
         return best_f1, model, threshold, time.time() - start_time
         
@@ -69,5 +70,9 @@ class DittoMatchingSolution(MatchingSolution):
                                  num_workers=0,
                                  collate_fn=test_dataset.pad) #stimmt das so?
         f1 = evaluate(model, test_iter, threshold)
-        return {'predict': predict(self.test_path, self.dataset_name, model, batch_size, summarizer, lm, max_len, dk_injector, threshold), 'evaluate': f1}
+        prediction = predict(self.test_path, self.dataset_name, model, batch_size, summarizer, lm, max_len, dk_injector, threshold)
+        prediction[0].rename(columns={'match': 'prediction'}, inplace=True, errors='raise')
+        print(prediction[0])
+        
+        return {'predict': prediction, 'evaluate': f1}
     

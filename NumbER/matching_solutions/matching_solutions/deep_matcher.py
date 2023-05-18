@@ -61,7 +61,7 @@ class DeepMatcherMatchingSolution(MatchingSolution):
         recall = true_positives / (true_positives + false_negatives)
         f1 = 2 * (precision * recall) / (precision + recall)
         result = pd.concat([predictions, goldstandard], axis=1)[['label', 'match_score']]
-        result.rename(columns={'label': 'match', 'match_score': 'match_confidence'}, inplace=True, errors='raise')
+        result.rename(columns={'label': 'prediction', 'match_score': 'score'}, inplace=True, errors='raise')
         #result['p1'] = np.nan
         #result['p2'] = np.nan
         return {'predict': [result], 'evaluate': f1}

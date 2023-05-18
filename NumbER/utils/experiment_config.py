@@ -7,13 +7,13 @@ collections = {
 }
 experiment_configs = {
 'fast': {
-	"books3_numeric": {
+	"baby_products_numeric": {
 		"config": {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 64,
-					"n_epochs": 40,
+					"batch_size": 32,
+					"n_epochs": 1,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
@@ -35,7 +35,7 @@ experiment_configs = {
 			}
 		},
 		},'blocking':{
-			'sampler': NaiveSampler,
+			'sampler': SimilarityBasedSampler,
 			'config': {'n_most_similar':3, 'test_window_size': 10,'train_window_size': 25,'train_fraction': 0.6, 'valid_fraction': 0.2, 'test_fraction': 0.2,
       		'attributes': ["glat", "glon", 'j_m', 'h_m', 'k_m']}}
 	}
