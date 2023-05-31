@@ -72,7 +72,6 @@ class DittoMatchingSolution(MatchingSolution):
         f1 = evaluate(model, test_iter, threshold)
         prediction = predict(self.test_path, self.dataset_name, model, batch_size, summarizer, lm, max_len, dk_injector, threshold)
         prediction[0].rename(columns={'match': 'prediction'}, inplace=True, errors='raise')
-        print(prediction[0])
         
         return {'predict': prediction, 'evaluate': f1}
     

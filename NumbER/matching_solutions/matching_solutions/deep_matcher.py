@@ -16,7 +16,7 @@ class DeepMatcherMatchingSolution(MatchingSolution):
         main_path = Path(self.train_path).parent.absolute()
         print("main", main_path)
         model = dm.MatchingModel()
-        train, validation, self.test = dm.data.process(path=main_path, train=f'train_{i}.csv', validation=f'valid_{i}.csv', test=f'test_{i}.csv', label_attr='prediction')
+        train, validation, self.test = dm.data.process(path=main_path, train=f'deep_matcher_train_{i}.csv', validation=f'deep_matcher_valid_{i}.csv', test=f'deep_matcher_test_{i}.csv', label_attr='prediction')
         start_time = time.time()
         best_f1 = model.run_train(
 			train,
@@ -35,9 +35,9 @@ class DeepMatcherMatchingSolution(MatchingSolution):
         #test_file.rename(columns={'id': '_id'},
         #  inplace=True, errors='raise')
         test_file.drop(columns=['prediction'], inplace=True)
-        test_file.to_csv(self.test_path, index=False)
+        test_file.to_csv(f"{str(self.test_path)[:-4]}_withoutpred.csv", index=False)
         unlabeled = dm.data.process_unlabeled(
-    		path=self.test_path,
+    		path=f"{str(self.test_path)[:-4]}_withoutpred.csv",
     		trained_model=model)
         predictions = model.run_prediction(unlabeled, device='cuda')
         predictions['label'] = 0
@@ -57,11 +57,13 @@ class DeepMatcherMatchingSolution(MatchingSolution):
                     false_negatives += 1
                 else:
                     true_negatives += 1
-        precision = true_positives / (true_positives + false_positives)
-        recall = true_positives / (true_positives + false_negatives)
-        f1 = 2 * (precision * recall) / (precision + recall)
-        result = pd.concat([predictions, goldstandard], axis=1)[['label', 'match_score']]
-        result.rename(columns={'label': 'prediction', 'match_score': 'score'}, inplace=True, errors='raise')
+        precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 and true_positives > 0 else 0
+        recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 and true_positives > 0 else 0
+        f1 = 2 * (precision * recall) / (precision + recall) if precision > 0 and recall > 0 else 0
+        print("prediction", predictions)
+        #result = pd.concat([predictions, goldstandard], axis=1)[['label', 'match_score']]
+        #print("result", result)
+        predictions.rename(columns={'label': 'prediction', 'match_score': 'score'}, inplace=True, errors='raise')
         #result['p1'] = np.nan
         #result['p2'] = np.nan
-        return {'predict': [result], 'evaluate': f1}
+        return {'predict': [predictions], 'evaluate': f1}

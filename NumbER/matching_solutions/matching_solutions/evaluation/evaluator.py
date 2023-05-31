@@ -2,18 +2,20 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 
+from NumbER.matching_solutions.utils.transitive_closure import calculate_transitive_closure
+
 class Evaluator():
     def __init__(self, pred, gold, threshold=None):
-        self.gold = self.calculate_transitive_closure(gold)
+        self.gold = calculate_transitive_closure(gold)
         self.pred = pred
         self.threshold_valid = threshold
         
     def evaluate(self):
         result_not_closed = self.calculate_metrics(self.apply_threshold(self.pred, self.threshold_valid), self.gold)
-        print("h", result_not_closed)
-        #_, f1_test = self.find_best_threshold(self.pred, self.gold)
-        #result_closed = self.calculate_metrics(self.calculate_transitive_closure(self.pred), self.gold)
-        #return {'f1_test': f1_test, 'result_not_closed': result_not_closed, 'result_closed': result_closed}
+        best_threshold = self.find_best_threshold(self.pred, self.gold)[0]
+        result_best_threshold = self.calculate_metrics(self.apply_threshold(self.pred, best_threshold), self.gold)
+        result_closed = self.calculate_metrics(calculate_transitive_closure(self.pred), self.gold)
+        return {'best_threshold': best_threshold, 'result_best_threshold': result_best_threshold, 'result_not_closed': result_not_closed, 'result_closed': result_closed}
     
     def confusion_matrix(self, pred: pd.DataFrame, gold: pd.DataFrame):
         #dataframes consist of p1,p2,prediction (label in case of goldstandard) and threshold
@@ -22,7 +24,6 @@ class Evaluator():
         predicted_pairs = set(tuple(sorted(x)) for x in pred[['p1', 'p2']].values)
         gold_standard_pairs = set(tuple(sorted(x)) for x in gold[['p1', 'p2']].values)
         true_positives = len(predicted_pairs.intersection(gold_standard_pairs))
-        print("TP", predicted_pairs.intersection(gold_standard_pairs))
         false_positives = len(predicted_pairs.difference(gold_standard_pairs))
         false_negatives = len(gold_standard_pairs.difference(predicted_pairs))
         return {'tp': true_positives, 'fp': false_positives, 'fn': false_negatives}
@@ -30,8 +31,9 @@ class Evaluator():
     def find_best_threshold(self, pred: pd.DataFrame, gold: pd.DataFrame):
         best_threshold = None
         best_f1 = 0
+        l = pred.copy()
         for threshold in np.arange(0, 1, 0.01):
-            metrics = self.calculate_metrics(self.apply_threshold(pred, threshold), gold)
+            metrics = self.calculate_metrics(self.apply_threshold(l, threshold), gold)
             if metrics['f1'] > best_f1:
                 best_f1 = metrics['f1']
                 best_threshold = threshold
@@ -49,20 +51,3 @@ class Evaluator():
             pred['prediction'] = 0
             pred.loc[pred['score'] > threshold, 'prediction'] = 1
         return pred
-    
-    def calculate_transitive_closure(self, pairs: pd.DataFrame):
-        pairs = pairs[pairs['prediction'] == 1]
-        pairs=[tuple(sorted((pair['p1'], pair['p2']))) for _,pair in pairs.iterrows()]
-        G = nx.Graph()
-        G.add_edges_from(pairs)
-        clusters = []
-        for connected_component in nx.connected_components(G):
-            clusters.append(list(connected_component))
-        pairs = []
-        for cluster in clusters:
-            for i in range(len(cluster)):
-                for j in range(i+1, len(cluster)):
-                    pairs.append(tuple(sorted((cluster[i], cluster[j]))))
-        pairs = pd.DataFrame(pairs, columns=['p1', 'p2'])
-        pairs['prediction'] = 1
-        return pairs

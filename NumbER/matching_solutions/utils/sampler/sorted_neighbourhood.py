@@ -5,9 +5,8 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 class SortedNeighbourhoodSampler(BaseSampler):
     def __init__(self, records_path, goldstandard_path):
-        self.records_path = records_path
-        self.goldstandard_path = goldstandard_path
         super().__init__(records_path, goldstandard_path)
+        self.name = "sorted_neighbourhood"
         
     def sample(self, *args):
         config = args[0]

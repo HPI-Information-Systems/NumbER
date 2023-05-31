@@ -8,6 +8,7 @@ class NaiveSampler(BaseSampler):
     def __init__(self, records, goldstandard):
         print("Be naive like you")
         super().__init__(records, goldstandard)
+        self.name = "naive"
 
     def sample_records(self, *args):
         config = args[0]
@@ -21,9 +22,10 @@ class NaiveSampler(BaseSampler):
             groundtruth = groundtruth[groundtruth['prediction'] == 1]
         clusters_ = self.create_clusters(groundtruth)
         print("clusters", clusters_)
-        #print(clusters_)
+        
         random.seed(time.clock())
         random.shuffle(clusters_)
+        
         #print("Shuffled clusters", clusters_)
         #np.random.shuffle(clusters_)
         #print("shuffled", clusters_)

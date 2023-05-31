@@ -1,22 +1,21 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 from NumbER.matching_solutions.utils.output_formats import OutputFormat,MD2MFormat, DittoFormat, DeepMatcherFormat
-from typing import Tuple
+from NumbER.matching_solutions.utils.output_formats import DummyFormat
 import networkx as nx
+import os
+import pathlib
 
 class BaseSampler(ABC):
 	def __init__(self, records_path, goldstandard_path):
-		print("Initializing sampler")
 		self.records = pd.read_csv(records_path, index_col=None)
-		print("Records", self.records)
 		self.records = self.records.replace({'\t': ''}, regex=True)
-		print("Records", self.records)
 		self.records['id'] = self.records['id'].astype(float)
-		print("Records", self.records)
 		self.goldstandard = pd.read_csv(goldstandard_path, index_col=None)
-		print("Goldstandard", self.goldstandard)
+		self.records_path = records_path
+		self.goldstandard_path = goldstandard_path
 		if "prediction" in self.goldstandard.columns:
-			print("Prediction is inside of it")
+			print("Prediction is inside of it. Filtering only the matching pairs")
 			self.goldstandard = self.goldstandard[self.goldstandard['prediction'] == 1]
 		print("Goldstandard dwad", self.goldstandard)
 
@@ -35,32 +34,34 @@ class BaseSampler(ABC):
 	def create_format(self, output_format, config):
 		print("Creating format")
 		train_data, valid_data, test_data = self.sample(config)
+		print("Lengths", len(train_data), len(valid_data), len(test_data))
+		print("Train_data: ", train_data)
+		print("Valid_data: ", valid_data)
+		print("Test_data: ", test_data)
+		if config['constant_based']:
+			train_formatter = DummyFormat(train_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
+			valid_formatter = DummyFormat(valid_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
+			test_formatter = DummyFormat(test_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
+			return train_formatter, valid_formatter, test_formatter
 		print("SAMPLED", train_data)
 		print(valid_data)
 		print(test_data)
 		print("OUTPUTFORMATS", output_format)
-		Formatter = DittoFormat if output_format == 'ditto' else DeepMatcherFormat
-		if output_format == 'deepmatcher':
+		if output_format == 'deep_matcher' or output_format == "xgboost":
 			Formatter = DeepMatcherFormat
 		elif output_format == 'ditto':
 			Formatter = DittoFormat
 		elif output_format == 'md2m':
 			Formatter = MD2MFormat
-		train_data.drop_duplicates(subset=['p1', 'p2'], inplace=True)
-		valid_data.drop_duplicates(subset=['p1', 'p2'], inplace=True)
-		test_data.drop_duplicates(subset=['p1', 'p2'], inplace=True)
-		print("Lengths", len(train_data), len(valid_data), len(test_data))
-		print(train_data)
-		print(valid_data)
-		print(test_data)
+		
+
 		self.check_no_leakage(train_data, valid_data, test_data)
 		for data in [train_data, valid_data, test_data]:
 			print("CHECKING CORRECTNESS")
 			assert self.check_correctnesss(data)
-			assert len(data[data.duplicated(['p1', 'p2'])]) == 0
+			assert len(data.apply(lambda row: tuple(sorted((row['p1'], row['p2']))), axis=1).unique()) == len(data)
 			print("Amount of matching pairs", len(data[data['prediction'] == 1]))
 			print("Amount of non-matching pairs", len(data[data['prediction'] == 0]))
-
 		return Formatter(train_data, self.records), Formatter(valid_data, self.records), Formatter(test_data, self.records)
 
 	def check_correctnesss(self, data):
@@ -77,9 +78,6 @@ class BaseSampler(ABC):
 		train_data.to_csv('train_data.csv', index=False)
 		valid_data.to_csv('valid_data.csv', index=False)
 		test_data.to_csv('test_data.csv', index=False)
-		#print("Train ids", train_ids, len(train_ids))
-		#print("Valid ids", valid_ids, len(valid_ids))
-		#print("Test ids", test_ids, len(test_ids))
 		assert len(train_ids.intersection(valid_ids)) == 0
 		assert len(train_ids.intersection(test_ids)) == 0
 		assert len(valid_ids.intersection(test_ids)) == 0

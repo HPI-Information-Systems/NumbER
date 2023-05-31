@@ -91,12 +91,13 @@ def process_experiment_files(goldstandard_file, experiment_file, experiment, dat
         
 if __name__ == '__main__':
     experiments = {
-        "experiments_sorted_neighbourhood_9_16_05_2023_19:40:07": ["books3_numeric"],
-        "experiments_similarity_based_5_16_05_2023_07:04:35": ["books3_numeric_no_isbn"],
-        "experiments_naive_sampling_7_16_05_2023_23:36:38":
-            [
-                "baby_products_numeric", "books3_numeric", "books3_numeric_no_isbn", "earthquakes", "vsx", "x2_numeric", "x3_numeric"
-            ]
+        "experiments_test_19_05_2023_19:49:50": ["baby_products_numeric"],
+        # "experiments_sorted_neighbourhood_9_16_05_2023_19:40:07": ["books3_numeric"],
+        # "experiments_similarity_based_5_16_05_2023_07:04:35": ["books3_numeric_no_isbn"],
+        # "experiments_naive_sampling_7_16_05_2023_23:36:38":
+        #     [
+        #         "baby_products_numeric", "books3_numeric", "books3_numeric_no_isbn", "earthquakes", "vsx", "x2_numeric", "x3_numeric"
+        #     ]
     }
     result = []
     for experiment, datasets in experiments.items():

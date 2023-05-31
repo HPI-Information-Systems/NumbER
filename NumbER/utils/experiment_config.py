@@ -7,7 +7,7 @@ collections = {
 }
 experiment_configs = {
 'fast': {
-	"baby_products_numeric": {
+	"books3_numeric": {
 		"config": {
 			"ditto": {
 				"train": {
@@ -25,6 +25,10 @@ experiment_configs = {
 					"max_len": 256,
 				}
 			},
+		"xgboost": {
+			"train": {"early_stopping_rounds": 100},
+			"test": {}
+		},
 		"deep_matcher": {
 			"train": {
 				'epochs': 10,
@@ -35,7 +39,7 @@ experiment_configs = {
 			}
 		},
 		},'blocking':{
-			'sampler': SimilarityBasedSampler,
+			'sampler': NaiveSampler,
 			'config': {'n_most_similar':3, 'test_window_size': 10,'train_window_size': 25,'train_fraction': 0.6, 'valid_fraction': 0.2, 'test_fraction': 0.2,
       		'attributes': ["glat", "glon", 'j_m', 'h_m', 'k_m']}}
 	}
@@ -178,22 +182,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -213,22 +217,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -248,22 +252,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -283,22 +287,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -318,22 +322,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 10,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -353,8 +357,8 @@ experiment_configs = {
 				"ditto": {
 					"train": {
 						"run_id": 1,
-						"batch_size": 10,
-						"n_epochs": 3,
+						"batch_size": 32,
+						"n_epochs": 40,
 						"lr": 3e-5,
 						"max_len": 256,
 						"lm": "roberta",
@@ -368,7 +372,7 @@ experiment_configs = {
 				},
 			"deep_matcher": {
 				"train": {
-					'epochs': 5,
+					'epochs': 10,
 					'batch_size':16,
 					'pos_neg_ratio':3
 				},
@@ -390,22 +394,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 10,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -420,7 +424,7 @@ experiment_configs = {
 			'test_window_size': 9,
       	'attributes': ["storage_refine"]}}
 	},
-  "protein": {
+  	"protein": {
 		"config": {
 			"ditto": {
 				"train": {
@@ -457,64 +461,28 @@ experiment_configs = {
  },
 },
 'numeric_sorted': { 
-	'vsx': {
-		"config": {
-				"ditto": {
-					"train": {
-						"run_id": 1,
-						"batch_size": 10,
-						"n_epochs": 3,
-						"lr": 3e-5,
-						"max_len": 256,
-						"lm": "roberta",
-						"fp16": "True",
-					},
-					"test": {
-						"batch_size": 16,
-						"lm": "roberta",
-						"max_len": 256,
-					}
-				},
-			"deep_matcher": {
-				"train": {
-					'epochs': 7,
-					'batch_size':8,
-					'pos_neg_ratio':3
-				},
-				"test": {
-				}
-			},
-			},
-			'blocking':{
-				'sampler': SortedNeighbourhoodSampler,
-				'distance_path': 'similarity.npy',
-				'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
-				'train_window_size': 25,
-				'test_window_size': 10,
-      			'attributes': ["RAdeg","DEdeg"]
-         	}}
-  },
+	
 	"x3_numeric": {
 		"config": {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 10,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':8,
     			'pos_neg_ratio':3
 			},
@@ -534,22 +502,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -569,22 +537,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -604,22 +572,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -639,22 +607,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 10,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -675,15 +643,15 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
@@ -710,15 +678,15 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 3,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
@@ -740,6 +708,78 @@ experiment_configs = {
 			'test_window_size': 10,
       	'attributes': ["volume","enclosure","surface","lipoSurface","depth","surf/vol","lid/hull","ellVol"]}}#,"ell_c/a","ell_b/a","surfGPs","lidGPs","hullGPs","siteAtms","accept","donor","aromat","hydrophobicity","metal","Cs","Ns","Os","Ss","Xs","acidicAA","basicAA","polarAA","apolarAA","sumAA","ALA","ARG","ASN","ASP","CYS"]}},
  },
+	'vsx': {
+		"config": {
+				"ditto": {
+					"train": {
+						"run_id": 1,
+						"batch_size": 32,
+						"n_epochs": 40,
+						"lr": 3e-5,
+						"max_len": 256,
+						"lm": "roberta",
+						"fp16": "True",
+					},
+					"test": {
+						"batch_size": 32,
+						"lm": "roberta",
+						"max_len": 256,
+					}
+				},
+			"deep_matcher": {
+				"train": {
+					'epochs': 7,
+					'batch_size':8,
+					'pos_neg_ratio':3
+				},
+				"test": {
+				}
+			},
+			},
+			'blocking':{
+				'sampler': SortedNeighbourhoodSampler,
+				'distance_path': 'similarity.npy',
+				'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
+				'train_window_size': 25,
+				'test_window_size': 10,
+      			'attributes': ["RAdeg","DEdeg"]
+         	}}
+  },
+  "2MASS": {
+		"config": {
+			"ditto": {
+				"train": {
+					"run_id": 1,
+					"batch_size": 32,
+					"n_epochs": 40,
+					"lr": 3e-5,
+					"max_len": 256,
+					"lm": "roberta",
+					"fp16": "True",
+				},
+				"test": {
+					"batch_size": 32,
+					"lm": "roberta",
+					"max_len": 256,
+				}
+			},
+		"deep_matcher": {
+			"train": {
+				'epochs': 10,
+    			'batch_size':16,
+    			'pos_neg_ratio':3
+			},
+			"test": {
+			}
+		},
+		},'blocking':{
+			'sampler': SortedNeighbourhoodSampler,
+			'distance_path': 'similarity.npy',
+			'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
+			'train_window_size': 25,
+			'test_window_size': 10,
+      	'attributes': ["glat", "glon", "j_m", "h_m", "k_m"]}}
+	},
 },
 
 'numeric_naive': {  
@@ -748,15 +788,15 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
@@ -783,22 +823,22 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -818,8 +858,8 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
@@ -833,7 +873,7 @@ experiment_configs = {
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -853,8 +893,8 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 15,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
@@ -868,7 +908,7 @@ experiment_configs = {
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -888,8 +928,8 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 10,
+					"batch_size": 32,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
@@ -903,7 +943,7 @@ experiment_configs = {
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -923,8 +963,8 @@ experiment_configs = {
 				"ditto": {
 					"train": {
 						"run_id": 1,
-						"batch_size": 10,
-						"n_epochs": 3,
+						"batch_size": 32,
+						"n_epochs": 40,
 						"lr": 3e-5,
 						"max_len": 256,
 						"lm": "roberta",
@@ -961,7 +1001,7 @@ experiment_configs = {
 				"train": {
 					"run_id": 1,
 					"batch_size": 10,
-					"n_epochs": 10,
+					"n_epochs": 40,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
@@ -975,7 +1015,7 @@ experiment_configs = {
 			},
 		"deep_matcher": {
 			"train": {
-				'epochs': 10,
+				'epochs': 20,
     			'batch_size':16,
     			'pos_neg_ratio':3
 			},
@@ -995,15 +1035,15 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 10,
-					"n_epochs": 3,
+					"batch_size": 32,
+					"n_epochs": 10,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": "True",
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
@@ -1025,6 +1065,41 @@ experiment_configs = {
 			'test_window_size': 10,
       	'attributes': ["volume","enclosure","surface","lipoSurface","depth","surf/vol","lid/hull","ellVol"]}}#,"ell_c/a","ell_b/a","surfGPs","lidGPs","hullGPs","siteAtms","accept","donor","aromat","hydrophobicity","metal","Cs","Ns","Os","Ss","Xs","acidicAA","basicAA","polarAA","apolarAA","sumAA","ALA","ARG","ASN","ASP","CYS"]}},
  },
+	"2MASS": {
+		"config": {
+			"ditto": {
+				"train": {
+					"run_id": 1,
+					"batch_size": 32,
+					"n_epochs": 40,
+					"lr": 3e-5,
+					"max_len": 256,
+					"lm": "roberta",
+					"fp16": "True",
+				},
+				"test": {
+					"batch_size": 32,
+					"lm": "roberta",
+					"max_len": 256,
+				}
+			},
+		"deep_matcher": {
+			"train": {
+				'epochs': 10,
+    			'batch_size':16,
+    			'pos_neg_ratio':3
+			},
+			"test": {
+			}
+		},
+		},'blocking':{
+			'sampler': SimilarityBasedSampler,
+			'distance_path': 'similarity.npy',
+			'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
+			'train_window_size': 25,
+			'test_window_size': 10,
+      	'attributes': ["glat", "glon", "j_m", "h_m", "k_m"]}}
+	},
 },
 
 'experiment_config_1': {
