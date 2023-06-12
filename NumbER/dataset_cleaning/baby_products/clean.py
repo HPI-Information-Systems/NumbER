@@ -88,6 +88,7 @@ gold_standard.to_csv('./baby_products_matches.csv', index=False)
 df.rename(columns={'instance_id': 'id'}, inplace=True)
 print(df.columns)
 df[['width', 'height', 'length', 'weight_lb', 'weight_oz', 'price', 'is_discounted']].to_csv('./baby_products_features.csv')
+df.to_csv('./baby_products_cleaned_features.csv')
 matches = pd.read_csv('./baby_products_matches.csv').rename(columns={'left_instance_id': 'p1', 'right_instance_id': 'p2', 'label': 'prediction'})
 matches = matches[matches['prediction'] == 1]
 matches.to_csv('./baby_products_matches.csv', index=False)

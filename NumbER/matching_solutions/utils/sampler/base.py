@@ -1,6 +1,6 @@
 import pandas as pd
 from abc import ABC, abstractmethod
-from NumbER.matching_solutions.utils.output_formats import OutputFormat,MD2MFormat, DittoFormat, DeepMatcherFormat
+from NumbER.matching_solutions.utils.output_formats import MD2MFormat, DittoFormat, DeepMatcherFormat, EmbittoFormat
 from NumbER.matching_solutions.utils.output_formats import DummyFormat
 import networkx as nx
 import os
@@ -39,6 +39,8 @@ class BaseSampler(ABC):
 		print("Valid_data: ", valid_data)
 		print("Test_data: ", test_data)
 		if config['constant_based']:
+			print("Constant based")
+			print(self.records.columns)
 			train_formatter = DummyFormat(train_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
 			valid_formatter = DummyFormat(valid_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
 			test_formatter = DummyFormat(test_data, self.records, output_format, os.path.join(pathlib.Path(self.records_path).parent, 'samples', self.name))
@@ -53,7 +55,8 @@ class BaseSampler(ABC):
 			Formatter = DittoFormat
 		elif output_format == 'md2m':
 			Formatter = MD2MFormat
-		
+		elif output_format == 'embitto':
+			Formatter = EmbittoFormat
 
 		self.check_no_leakage(train_data, valid_data, test_data)
 		for data in [train_data, valid_data, test_data]:

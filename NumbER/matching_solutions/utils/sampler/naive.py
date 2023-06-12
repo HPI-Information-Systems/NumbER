@@ -23,7 +23,7 @@ class NaiveSampler(BaseSampler):
         clusters_ = self.create_clusters(groundtruth)
         print("clusters", clusters_)
         
-        random.seed(time.clock())
+        random.seed(time.process_time())
         random.shuffle(clusters_)
         
         #print("Shuffled clusters", clusters_)

@@ -36,9 +36,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 		results_f1 = []
 		times = []
 		print(torch.cuda.memory_summary(device=None, abbreviated=False))
-		for i in range(5):
-			if iteration is not None:
-				i = int(iteration)
+		for i in range(1):#5):
+			#if iteration is not None:
+			#	i = int(iteration)
 			print("DOING it for ", dataset, " run ", i)
 			wandb.init(
 				project="NumbER",
@@ -68,6 +68,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				elif matching_solution == "xgboost":
 					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.xgboost")
 					algorithm = getattr(module, 'XGBoostMatchingSolution')
+				elif matching_solution == "embitto":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.embitto")
+					algorithm = getattr(module, 'EmbittoMatchingSolution')
 				else:
 					module = None
 				dataset_path = os.path.join(base_output_path, 'datasets', dataset)
@@ -81,12 +84,15 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				sampler = paths['blocking']['sampler'](record_path, matches_path)
 				train_formatter, valid_formatter, test_formatter = sampler.create_format(matching_solution, paths['blocking']['config'])
 				pd.read_csv(record_path).replace({"\t", ""}, regex=True).to_csv(os.path.join(dataset_path, 'dataset.csv'), index=False)
-				(train_path, train_record_path), (valid_path, valid_record_path), (test_path, test_record_path) = train_formatter.write_to_file(os.path.join(dataset_path, f'train_{i}')), valid_formatter.write_to_file(os.path.join(dataset_path, f'valid_{i}')), test_formatter.write_to_file(os.path.join(dataset_path, f'test_{i}'))
+				(train_path, train_goldstandard_path), (valid_path, valid_goldstandard_path), (test_path, test_goldstandard_path) = train_formatter.write_to_file(os.path.join(dataset_path, f'train_{i}')), valid_formatter.write_to_file(os.path.join(dataset_path, f'valid_{i}')), test_formatter.write_to_file(os.path.join(dataset_path, f'test_{i}'))
 				print("Train path", train_path, "valid path", valid_path, "test path", test_path)
-				if train_record_path is not None and valid_record_path is not None and test_record_path is not None:
-					#config['test']['train_records_path'] = train_records_path
-					config['test']['valid_records_path'] = valid_record_path
-					config['test']['test_records_path'] = test_record_path
+				if train_goldstandard_path is not None and valid_goldstandard_path is not None and test_goldstandard_path is not None:
+					config['test']['train_goldstandard_path'] = train_goldstandard_path
+					config['test']['valid_goldstandard_path'] = valid_goldstandard_path
+					config['test']['testtest_goldstandard_path_records_path'] = test_goldstandard_path
+					config['train']['train_goldstandard_path'] = train_goldstandard_path
+					config['train']['valid_goldstandard_path'] = valid_goldstandard_path
+					config['train']['test_goldstandard_path'] = test_goldstandard_path
 				# train_path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/NumbER/matching_solutions/ditto/data/er_magellan/Structured/Beer/train.txt"
 				# valid_path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/NumbER/matching_solutions/ditto/data/er_magellan/Structured/Beer/valid.txt"
 				# test_path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/NumbER/matching_solutions/ditto/data/er_magellan/Structured/Beer/test.txt"
@@ -99,7 +105,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 					print("Training model...", file=sys.stdout)
 					config['train']['i'] = str(i)
 					training_time = time.time()
+					print("Config", config['train'])
 					best_f1, model, threshold, train_time = solution.model_train(**config['train'])
+					raise Exception("Test")
 					wandb.log({'training_time': training_time - time.time()})
 					print(f"Predicting... Best f1 achieved: {best_f1}", file=sys.stdout)
 					if threshold is not None:
@@ -107,9 +115,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 						config['test']['threshold'] = threshold
 					else:
 						print("No threshold set")
-					prediction_time = time.time()
+					#prediction_time = time.time()
 					prediction = solution.model_predict(**config['test'], model=model)
-					wandb.log({'prediction_time': prediction_time - time.time()})
+					#wandb.log({'prediction_time': prediction_time - time.time()})
 					print("Predicted", prediction)
 				except Exception as e:
 					print(traceback.format_exc(), file=sys.stdout)
@@ -157,8 +165,6 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				print(f"An error occurec: {e}", file=sys.stdout)
 				wandb.finish(1)
 				continue
-			if iteration is not None:
-				break
 		if len(times) == 0 or len(results_f1) == 0:
 			result.append({
 				'dataset': dataset,

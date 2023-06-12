@@ -1,6 +1,8 @@
 *.csv
 dataset_cleaning/alaska/notebook/**/*
 
+lightning_logs
+
 dataset_cleaning/alaska/BoomBoomChicken-finalist/env/*
 *.data
 *.vscode

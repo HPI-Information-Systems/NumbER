@@ -7,8 +7,14 @@ collections = {
 }
 experiment_configs = {
 'fast': {
-	"books3_numeric": {
+	"books3_all": {
 		"config": {
+			"embitto": {
+				"train": {
+				},
+				"test": {
+				}
+			},
 			"ditto": {
 				"train": {
 					"run_id": 1,

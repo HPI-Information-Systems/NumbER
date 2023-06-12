@@ -7,10 +7,11 @@ import itertools
 import networkx as nx
 
 class OutputFormat(ABC):
-    def __init__(self, goldstandard, records):
+    def __init__(self, goldstandard, records, drop_id=True):
         self.goldstandard = goldstandard
-        if "id" in records.columns:
-            records.drop('id', axis=1, inplace=True)
+        if drop_id:
+            if "id" in records.columns:
+                records.drop('id', axis=1, inplace=True)
         self.records = records
     def create_output(self):
         raise NotImplementedError
@@ -19,6 +20,7 @@ class OutputFormat(ABC):
         #    raise FileExistsError
 class DittoFormat(OutputFormat):
     def __init__(self, goldstandard: pd.DataFrame, records: pd.DataFrame):
+        super().__init__(goldstandard, records, True)
         self.goldstandard = goldstandard
         self.records = records
         
@@ -40,18 +42,33 @@ class DittoFormat(OutputFormat):
         return result, None
     def write_to_file(self, filepath):
         filepath = f"{filepath}.txt" if filepath[-4:] != ".txt" else filepath
-        #try:
-        #super().write_to_file(filepath)
-        #except FileExistsError:
-        #    return filepath
         with open(filepath, "w") as file:
             output = self.create_output()[0]
             for element in output:
                 file.write(element + "\n")
         return filepath, None
+    
+class EmbittoFormat(OutputFormat):
+    def __init__(self, goldstandard: pd.DataFrame, records: pd.DataFrame):
+        super().__init__(goldstandard, records, False)
+        self.goldstandard = goldstandard
+        self.records = records
+        
+    def create_output(self):
+        all_ids = set(self.goldstandard['p1'].values).union(set(self.goldstandard['p2'].values))
+        records = self.records[self.records['id'].isin(all_ids)]
+        return records, self.goldstandard
+    
+    def write_to_file(self, filepath):
+        filepath = f"{filepath}.csv" if filepath[-4:] != ".csv" else filepath
+        records, goldstandard = self.create_output()
+        records.to_csv(filepath, index=False)
+        goldstandard.to_csv(f"{filepath[:-4]}_goldstandard.csv", index=False)
+        return f"{filepath[:-4]}_goldstandard.csv", filepath
 
 class DeepMatcherFormat(OutputFormat):
     def __init__(self, goldstandard: pd.DataFrame, records: pd.DataFrame):
+        super().__init__(goldstandard, records, True)
         self.goldstandard = goldstandard
         self.records = records
         
@@ -113,11 +130,10 @@ class MD2MFormat(OutputFormat):
 
 class DummyFormat(OutputFormat):
     def __init__(self, goldstandard, records, output_format: str, base_data_path: str):
-        super().__init__(goldstandard, records)
+        super().__init__(goldstandard, records, False)#todo check if true or false
         self.output_format = output_format
         self.base_data_path = base_data_path
         
-    
     def write_to_file(self, filepath):
         os.makedirs(self.base_data_path, exist_ok=True)
         filename = pathlib.Path(filepath).name
@@ -135,6 +151,8 @@ class DummyFormat(OutputFormat):
             mapping = {
                 'ditto': DittoFormat,
                 'deep_matcher': DeepMatcherFormat,
+                'embitto': EmbittoFormat,
             }
             return mapping[self.output_format](self.goldstandard, self.records).write_to_file(os.path.join(pathlib.Path(filepath).parent, pathlib.Path(filepath).stem))
-        return filepath, None
+        
+        return filepath, goldstandard_path if self.output_format == "embitto" else None
