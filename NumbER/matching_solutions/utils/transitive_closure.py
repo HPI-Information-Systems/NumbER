@@ -16,8 +16,28 @@ def calculate_clusters(pairs: pd.DataFrame):
         clusters.append(list(connected_component))
     return clusters
 
+def calculate_from_entity_ids(records):
+    print("reocrds", records)
+    clusters = {}
+    for _, record in records.iterrows():
+        if record['pred_entity_ids'] not in clusters:
+            clusters[record['pred_entity_ids']] = []
+        clusters[record['pred_entity_ids']].append(record['id'])
+    clusters = list(clusters.values())
+    print("clusters", clusters)
+    return clusters
 
-def convert_to_pairs(clusters):
+def build_entity_ids(groundtruth: pd.DataFrame, df: pd.DataFrame):
+    clusters = calculate_clusters(groundtruth)
+    entity_id = 0
+    for cluster in clusters:
+        for id in cluster:
+            df.loc[df['id'] == id, 'entity_id'] = entity_id
+        entity_id += 1
+    return df['entity_id'].values
+
+
+def convert_to_pairs(clusters) -> pd.DataFrame:
     pairs = []
     for cluster in clusters:
         for i in range(len(cluster)):

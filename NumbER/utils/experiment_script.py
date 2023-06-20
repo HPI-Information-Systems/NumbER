@@ -89,7 +89,7 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				if train_goldstandard_path is not None and valid_goldstandard_path is not None and test_goldstandard_path is not None:
 					config['test']['train_goldstandard_path'] = train_goldstandard_path
 					config['test']['valid_goldstandard_path'] = valid_goldstandard_path
-					config['test']['testtest_goldstandard_path_records_path'] = test_goldstandard_path
+					config['test']['test_goldstandard_path'] = test_goldstandard_path
 					config['train']['train_goldstandard_path'] = train_goldstandard_path
 					config['train']['valid_goldstandard_path'] = valid_goldstandard_path
 					config['train']['test_goldstandard_path'] = test_goldstandard_path
@@ -107,7 +107,7 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 					training_time = time.time()
 					print("Config", config['train'])
 					best_f1, model, threshold, train_time = solution.model_train(**config['train'])
-					raise Exception("Test")
+					#raise Exception("Test")
 					wandb.log({'training_time': training_time - time.time()})
 					print(f"Predicting... Best f1 achieved: {best_f1}", file=sys.stdout)
 					if threshold is not None:
@@ -116,6 +116,7 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 					else:
 						print("No threshold set")
 					#prediction_time = time.time()
+					print("Config", config['test'])
 					prediction = solution.model_predict(**config['test'], model=model)
 					#wandb.log({'prediction_time': prediction_time - time.time()})
 					print("Predicted", prediction)
@@ -128,11 +129,11 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				print("Matching solution path", matching_solution_path)
 				os.makedirs(matching_solution_path, exist_ok=True)
 				print(prediction['predict'][0])
+				print("goldstandard", test_formatter.goldstandard)
 				groundtruth = test_formatter.goldstandard.reset_index()
-				pred = pd.merge(test_formatter.goldstandard.reset_index(), prediction['predict'][0].reset_index(), left_index=True, right_index=True)[['p1', 'p2', 'prediction_y', 'score']]
-				pred.rename(columns={'prediction_y': 'prediction'},inplace=True, errors='raise')
-				print(pred)
-				quality = Evaluator(pred[['p1', 'p2', 'prediction', 'score']], groundtruth).evaluate()
+				print(groundtruth)
+				#print(pred)
+				quality = Evaluator(prediction['predict'][0][['p1', 'p2', 'prediction', 'score']], groundtruth).evaluate()
 				gc.collect()
 				torch.cuda.empty_cache()
 				wandb.log({
@@ -153,6 +154,8 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 
 				print("Got Quality", quality)
 				#pred.rename(columns={'match': 'prediction'},inplace=True, errors='raise')
+				pred = pd.merge(test_formatter.goldstandard.reset_index(), prediction['predict'][0].reset_index(), left_index=True, right_index=True)[['p1', 'p2', 'prediction_y', 'score']]
+				pred.rename(columns={'prediction_y': 'prediction'},inplace=True, errors='raise')
 				pred.to_csv(os.path.join(matching_solution_path, dataset + "_" + str(i) + '.csv'), index=False)
 				print("Wrote prediction", pred)
 				test_formatter.goldstandard.to_csv(os.path.join(matching_solution_path, dataset + f'_goldstandard_{i}.csv'), index=False)

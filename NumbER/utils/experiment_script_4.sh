@@ -21,7 +21,7 @@ set -e
 eval "$(conda shell.bash hook)"
 cd /hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER
 
-run_experiment "ditto" $1
+run_experiment "embitto" $1
 #run_experiment "ditto" $1
 ##run_experiment "ditto" $1
 # run_experiment "deep_matcher" $1

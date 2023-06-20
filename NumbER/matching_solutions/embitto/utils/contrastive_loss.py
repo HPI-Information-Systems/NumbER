@@ -44,23 +44,53 @@ def contrastive_loss(pred, labels, t=0.07):
     #return loss
 
 def calculatue_tuples(pred, labels):
+    print("pred", pred)
+    print("labels", labels)
+    print(pred.shape)
+    print(labels.shape)
     positive_firsts = []
     positive_seconds = []
     negative_firsts = []
     negative_seconds = []
     for idx, item in enumerate(pred):
+        #print("idx", idx)
+        #print("item", item)
+        #print("Item")
         label = labels[idx]
         match_indices = [i for i, x in enumerate(labels) if x == label]
         non_match_indices = [i for i, x in enumerate(labels) if x != label]
-        random_match_index = random.choice(match_indices)
+        random_match_index = idx
+        while random_match_index == idx and len(match_indices) > 1:
+            random_match_index = random.choice(match_indices)
         random_non_match_index = random.choice(non_match_indices)
         positive_firsts.append(item)
         positive_seconds.append(pred[random_match_index])
         negative_firsts.append(item)
         negative_seconds.append(pred[random_non_match_index])
+    # print("positive_firsts", positive_firsts[0])
+    # print("positive_seconds", positive_seconds[0])
     return (positive_firsts, positive_seconds, negative_firsts, negative_seconds)
 
+class ContrastiveLoss(torch.nn.Module):
+    """
+    Contrastive loss
+    Takes embeddings of two samples and a target label == 1 if samples are from the same class and label == 0 otherwise
+    """
+    def __init__(self, margin):
+        super(ContrastiveLoss, self).__init__()
+        self.margin = margin
+        self.eps = 1e-9
 
+    def forward(self, output1, output2, target,valid=False, size_average=True):
+        # if valid:
+        #     print("output1", output1)
+        #     print("output2", output2)
+        #     print("target", target)
+        distances = (output2 - output1).pow(2).sum(0)  # squared distances
+        losses = 0.5 * (target.float() * distances +
+                        (1 + -1 * target).float() * torch.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
+        return losses.mean() if size_average else losses.sum()
+    
 def calculatue_tuples_old(pred, labels):
     positive_tuples = []
     negative_tuples = []
