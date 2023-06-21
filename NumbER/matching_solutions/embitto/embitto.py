@@ -3,6 +3,7 @@ import torch
 import pytorch_lightning as pl
 from enum import Enum
 from torch.nn import functional as F
+from transformers import AdamW
 from torch import nn
 from NumbER.matching_solutions.embitto.utils.contrastive_loss import contrastive_loss, ContrastiveLoss, calculatue_tuples
 import numpy as np
@@ -22,6 +23,7 @@ class Embitto(pl.LightningModule):
         self.fusion_component = fusion_component
         self.finetuning_step = nn.Linear(256, 2)
         self.direct = nn.Linear(768,2)
+        #self.optimizer = optimizer
         #self.save_hyperparameters()
         #self.finetuning_step = finetuning_step
         #self.criterion = ContrastiveLoss(margin=1.0) if self.stage == Stage.PRETRAIN else F.cross_entropy
@@ -36,7 +38,7 @@ class Embitto(pl.LightningModule):
         #     output = self.fusion_component(output_numerical, output_textual)
         output = output_textual
         if self.stage == Stage.FINETUNING:
-            output = self.direct(output)
+            #output = self.direct(output)
             return output
             #return F.softmax(output, dim=1)
             output = self.finetuning_step(output)
@@ -66,7 +68,8 @@ class Embitto(pl.LightningModule):
         return loss
     
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else torch.optim.Adam(self.parameters(), lr=3e-5)
+        #return self.optimizer
+        return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=3e-5)
     
     def validation_step(self, batch, batch_idx):
         textual_data, numerical_data, labels = batch

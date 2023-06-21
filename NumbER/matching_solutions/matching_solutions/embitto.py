@@ -5,6 +5,7 @@ from sklearn.cluster import DBSCAN
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning import loggers as pl_loggers
 from sklearn.neighbors import KNeighborsClassifier
+from transformers import AdamW
 import numpy as np
 import torch
 from NumbER.matching_solutions.utils.transitive_closure import convert_to_pairs, calculate_from_entity_ids
@@ -27,7 +28,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 		test_goldstandard_data = pd.read_csv(test_goldstandard_path)
 		textual_embedding_size = 256
 		numerical_embedding_size = 256
-		textual_max_length = 150
+		textual_max_length = 256
 		textual_component = BaseRoberta(textual_max_length, textual_embedding_size, Stage.PRETRAIN)
 		textual_formatter = textual_component.get_formatter()
 		self.train_data = self.process_dataframe(train_record_data, train_goldstandard_data, textual_formatter)
@@ -41,6 +42,9 @@ class EmbittoMatchingSolution(MatchingSolution):
          	textual_component=textual_component,
           	fusion_component=fusion_component
         )
+		# embitto.optimizer=AdamW(embitto.parameters(), lr=3e-5)
+		# embitto, optimizer = amp.initialize(embitto, embitto.optimizer, opt_level='O2')
+		# embitto.optimizer = optimizer
 		checkpoint_callback = ModelCheckpoint(
 			monitor="val_loss",
 			mode="min",
@@ -62,7 +66,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 			self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_formatter, stage)
 			self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_formatter, stage)
 			self.data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.FINETUNING)
-			trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=40, callbacks=[checkpoint_callback])#,logger=logger, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
+			trainer = pl.Trainer(accelerator="gpu",precision=16, devices=1, max_epochs=32, callbacks=[checkpoint_callback])#,logger=logger, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
 			trainer.fit(embitto, self.data)
 		return None, embitto, None, None
 
@@ -111,6 +115,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 
 	def get_textual_columns(self, df):
 		data = df.select_dtypes(include=['object', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64'])
+		return df.columns
 		return data.columns
 
 	def process_dataframe(self, df: pd.DataFrame, matches: pd.DataFrame, textual_formatter, stage = Stage.PRETRAIN):

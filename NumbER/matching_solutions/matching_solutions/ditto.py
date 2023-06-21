@@ -25,7 +25,7 @@ class DittoMatchingSolution(MatchingSolution):
         torch.manual_seed(run_id)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(run_id)
-        
+        print("FP16: ", fp16)
         run_tag = '%s_lm=%s_da=%s_dk=%s_su=%s_size=%s_id=%d' % (self.dataset_name, lm, da,
                 dk, summarize, str(size), run_id)
         run_tag = run_tag.replace('/', '_')

@@ -24,7 +24,7 @@ experiment_configs = {
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
-					"fp16": "True",
+					"fp16": True,
 				},
 				"test": {
 					"batch_size": 16,

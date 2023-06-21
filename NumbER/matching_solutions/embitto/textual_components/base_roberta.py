@@ -15,6 +15,8 @@ class BaseRoberta(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.max_length = max_length
         self.stage = stage
+        self.direct = nn.Linear(768,2)
+        print(max_length)
         #self.classifier = nn.Linear(self.roberta.config.hidden_size, num_labels)
 
     def forward(self, input_sequence):
@@ -22,15 +24,18 @@ class BaseRoberta(nn.Module):
         if self.stage == Stage.PRETRAIN:
             input_ids = [torch.tensor(self.tokenizer.encode(input, max_length=self.max_length, truncation=True)) for input in input_sequence]
         else:
+            input_ids = input_sequence
             #input_sequence = np.reshape(input_sequence, (shape[1], shape[0]))
-            input_ids = [self.tokenizer.encode(input[0], text_pair=input[1], max_length=self.max_length, truncation=True) for input in zip(input_sequence[0], input_sequence[1])]
+            #input_ids = [self.tokenizer.encode(input[0], text_pair=input[1], max_length=self.max_length, truncation=True) for input in zip(input_sequence[0], input_sequence[1])]
             #input_ids = torch.tensor(input_ids).to('cuda')
-        input_ids = self.pad_tensor_list(input_ids, self.max_length).long()
+        #input_ids = self.pad_tensor_list(input_ids, self.max_length).long()
+        print(input_ids)
         #input_ids = torch.stack(input_ids).to('cuda')
         outputs = self.roberta(
             input_ids
         )
-        return outputs[0][:, 0, :]
+        outputs= outputs[0][:, 0, :]
+        return self.direct(outputs)
         embeddings = self.embeddings(outputs[0][:, 0, :])
         return embeddings
         #return pooled_output
