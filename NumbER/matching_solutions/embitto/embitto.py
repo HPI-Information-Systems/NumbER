@@ -6,11 +6,8 @@ from torch.nn import functional as F
 from transformers import AdamW
 from torch import nn
 from NumbER.matching_solutions.embitto.utils.contrastive_loss import contrastive_loss, ContrastiveLoss, calculatue_tuples
+from NumbER.matching_solutions.embitto.enums import Stage, Phase
 import numpy as np
-
-class Stage(Enum):
-    PRETRAIN = 1
-    FINETUNING = 2
 
 class Embitto(pl.LightningModule):
     def __init__(self, stage: Stage, numerical_component, textual_component, fusion_component=None, finetuning_step=None, learning_rate: int = 0.00003):
@@ -22,58 +19,45 @@ class Embitto(pl.LightningModule):
         self.numerical_component = numerical_component
         self.fusion_component = fusion_component
         self.finetuning_step = nn.Linear(256, 2)
-        self.direct = nn.Linear(768,2)
-        #self.optimizer = optimizer
-        #self.save_hyperparameters()
-        #self.finetuning_step = finetuning_step
-        #self.criterion = ContrastiveLoss(margin=1.0) if self.stage == Stage.PRETRAIN else F.cross_entropy
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()
 
-    def forward(self, input_textual, input_numerical):
+    def forward(self, input_textual, input_numerical, phase: Phase):
         #output_numerical = self.numerical_component(input_numerical)
         #print(input_textual)
         output_textual = self.textual_component(input_textual)
-        # if self.numerical_component is not None:
-        #     output_numerical = self.numerical_component(input_numerical)
-        #     output = self.fusion_component(output_numerical, output_textual)
-        output = output_textual
+        if self.numerical_component is not None:
+            output_numerical = self.numerical_component(input_numerical, phase)
+            output = self.fusion_component(output_numerical, output_textual)
+        else:
+            output = output_textual
         if self.stage == Stage.FINETUNING:
-            #output = self.direct(output)
-            return output
-            #return F.softmax(output, dim=1)
             output = self.finetuning_step(output)
-            #apply softmax
-            #if first element in the output is greater than the second, then the prediction is 1, otherwise 0
-            #output = torch.argmax(output, dim=1)
-            #only return the first element of the output
-            #output = output[:, 0]
-            return output
         #embeddings = self.fusion_component(output_numerical, output_textual)
         #self.finetuning_step(embeddings)
-        return output_textual
+        return output
     
     def set_stage(self, stage: Stage):
         self.stage = stage
         self.textual_component.stage = stage
+        self.textual_component.max_length = 60 if stage == Stage.PRETRAIN else 256
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()
         if self.numerical_component is not None:
             self.numerical_component.stage = stage
         
     def training_step(self, batch, batch_idx):
         textual_data, numerical_data, labels = batch
-        predictions = self(textual_data, numerical_data)
+        predictions = self(textual_data, numerical_data, Phase.TRAIN)
         loss = self.calculate_embedding_loss(predictions, labels, phase="train") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
         self.log("train_loss", loss)
         print("train_loss", loss)
         return loss
     
     def configure_optimizers(self):
-        #return self.optimizer
         return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=3e-5)
     
     def validation_step(self, batch, batch_idx):
         textual_data, numerical_data, labels = batch
-        predictions = self(textual_data, numerical_data)
+        predictions = self(textual_data, numerical_data, Phase.VALID)
         
         loss = self.calculate_embedding_loss(predictions, labels, phase="val") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
         print("Loss", loss)
@@ -83,7 +67,7 @@ class Embitto(pl.LightningModule):
     def predict_step(self, batch, batch_idx):
         print("predict ste", batch)
         textual_data, numerical_data, labels = batch
-        result = self(textual_data, numerical_data)
+        result = self(textual_data, numerical_data, Phase.TEST)
         return result
     
     def calculate_embedding_loss(self, predictions, labels, phase="train"):
@@ -97,15 +81,19 @@ class Embitto(pl.LightningModule):
         pos_loss = []
         neg_loss = []
         neg_sim = []
+        sum_pos_loss = 0
+        sum_neg_loss = 0
         for pos1, pos2 in zip(positive_firsts, positive_seconds):
             loss = self.criterion(pos1,pos2, target=torch.tensor(1))
             sum_loss += loss
+            sum_pos_loss += loss
             pos_loss.append(loss)
             pos_sim.append(torch.cosine_similarity(pos1, pos2, dim=0))
         for neg1, neg2 in zip(negative_firsts, negative_seconds):
             loss = self.criterion(neg1, neg2, torch.tensor(-1))
             sum_loss += loss
             neg_loss.append(loss)
+            sum_neg_loss += loss
             neg_sim.append(torch.cosine_similarity(neg1, neg2,dim=0))
         if phase == "val":
             print("Positive lossmean", torch.mean(torch.tensor(pos_loss)))
@@ -115,6 +103,7 @@ class Embitto(pl.LightningModule):
             print("Positive similarity", torch.mean(torch.tensor(pos_sim)))
             print("Negative similarity", torch.mean(torch.tensor(neg_sim)))
         sum_loss = sum_loss / (len(positive_firsts) + len(negative_firsts))
+        sum_loss = (sum_pos_loss / len(positive_firsts) + sum_neg_loss / len(negative_firsts)) / 2
         print("Validarion loss", sum_loss) if phase == "val" else print("Training loss", sum_loss)
         return sum_loss
     

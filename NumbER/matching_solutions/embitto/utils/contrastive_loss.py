@@ -44,8 +44,8 @@ def contrastive_loss(pred, labels, t=0.07):
     #return loss
 
 def calculatue_tuples(pred, labels):
-    print("pred", pred)
-    print("labels", labels)
+    # print("pred", pred)
+    # print("labels", labels)
     print(pred.shape)
     print(labels.shape)
     positive_firsts = []
@@ -63,8 +63,10 @@ def calculatue_tuples(pred, labels):
         while random_match_index == idx and len(match_indices) > 1:
             random_match_index = random.choice(match_indices)
         random_non_match_index = random.choice(non_match_indices)
-        positive_firsts.append(item)
-        positive_seconds.append(pred[random_match_index])
+        for index in match_indices:
+            if index != idx:
+                positive_firsts.append(item)
+                positive_seconds.append(pred[index])
         negative_firsts.append(item)
         negative_seconds.append(pred[random_non_match_index])
     # print("positive_firsts", positive_firsts[0])

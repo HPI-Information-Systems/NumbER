@@ -2,11 +2,11 @@ from NumbER.matching_solutions.embitto.dataset import CompleteDataset, PairBased
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 import pandas as pd
-from NumbER.matching_solutions.embitto.embitto import Stage
+from NumbER.matching_solutions.embitto.enums import Stage
 
     
 class EmbittoDataModule(pl.LightningDataModule):
-    def __init__(self, train_data: pd.DataFrame, valid_data: pd.DataFrame, test_data: pd.DataFrame, predict_data: pd.DataFrame, stage: Stage, batch_size: int = 32):
+    def __init__(self, train_data: pd.DataFrame, valid_data: pd.DataFrame, test_data: pd.DataFrame, predict_data: pd.DataFrame, stage: Stage, batch_size: int = 100):
         super().__init__()
         self.train_data = train_data
         self.valid_data = valid_data
@@ -23,7 +23,7 @@ class EmbittoDataModule(pl.LightningDataModule):
         pass
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, collate_fn=self.train_dataset.pad, shuffle=True)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, collate_fn=self.train_dataset.pad, shuffle=True if self.stage == Stage.FINETUNING else False)
 
     def val_dataloader(self):
         return DataLoader(self.valid_dataset, batch_size=self.batch_size*16, collate_fn=self.train_dataset.pad)#, shuffle=True)

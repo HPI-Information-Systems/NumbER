@@ -1,5 +1,5 @@
 from torch import nn
-from NumbER.matching_solutions.embitto.embitto import Stage
+from NumbER.matching_solutions.embitto.enums import Stage
 from NumbER.matching_solutions.embitto.aggregators.aggregators.base_aggregator import BaseAggregator
 
 

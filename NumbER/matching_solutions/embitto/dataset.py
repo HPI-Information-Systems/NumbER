@@ -21,15 +21,24 @@ class CompleteDataset(Dataset):
         #self.numerical_data = self.numerical_data.reindex(entity_ids_df.index)
         self.textual_data = [self.textual_data[i] for i in indices]
         self.df = self.df.reindex(entity_ids_df.index)
+        self.tokenizer = AutoTokenizer.from_pretrained('roberta-base')
         self.df.drop(columns=['entity_id'], inplace=True)
-        
         assert len(self.numerical_data) == len(self.textual_data) == len(self.entity_ids)
 
     def __len__(self):
         return len(self.textual_data)
 
     def __getitem__(self, idx):
-        return self.textual_data[idx], self.numerical_data[idx], self.entity_ids[idx]
+        x = self.tokenizer.encode(self.textual_data[idx], max_length=80, truncation=True)
+        
+        return x, self.numerical_data.loc[idx].array, self.entity_ids[idx]
+    
+    @staticmethod
+    def pad(batch): #copied and adopted from ditto
+        x12,wow, y = zip(*batch)
+        maxlen = max([len(x) for x in x12])
+        x12 = [xi + [0]*(maxlen - len(xi)) for xi in x12]
+        return torch.LongTensor(x12), wow, torch.LongTensor(y)
     
 class PairBasedDataset(Dataset):
     def __init__(self, df: pd.DataFrame, numerical_data: pd.DataFrame, textual_data: pd.DataFrame, groundtruth: pd.DataFrame):
@@ -50,30 +59,10 @@ class PairBasedDataset(Dataset):
                                   text_pair=self.textual_pairs[idx][1],
                                   max_length=256,
                                   truncation=True)
-        return x, self.numerical_pairs[idx], self.groundtruth['prediction'][idx]
+        return x, self.numerical_pairs.loc[idx].array, self.groundtruth['prediction'][idx]
     
     @staticmethod
-    def pad(batch): #copied from ditto
-        """Merge a list of dataset items into a train/test batch
-        Args:
-            batch (list of tuple): a list of dataset items
-
-        Returns:
-            LongTensor: x1 of shape (batch_size, seq_len)
-            LongTensor: x2 of shape (batch_size, seq_len).
-                        Elements of x1 and x2 are padded to the same length
-            LongTensor: a batch of labels, (batch_size,)
-        """
-        # if len(batch[0]) == 3:
-        #     x1, x2, y = zip(*batch)
-
-        #     maxlen = max([len(x) for x in x1+x2])
-        #     x1 = [xi + [0]*(maxlen - len(xi)) for xi in x1]
-        #     x2 = [xi + [0]*(maxlen - len(xi)) for xi in x2]
-        #     return torch.LongTensor(x1), \
-        #            torch.LongTensor(x2), \
-        #            torch.LongTensor(y)
-        # else:
+    def pad(batch): #copied and adopted from ditto
         x12,wow, y = zip(*batch)
         maxlen = max([len(x) for x in x12])
         x12 = [xi + [0]*(maxlen - len(xi)) for xi in x12]
