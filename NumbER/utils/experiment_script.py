@@ -131,6 +131,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				print(prediction['predict'][0])
 				print("goldstandard", test_formatter.goldstandard)
 				groundtruth = test_formatter.goldstandard.reset_index()
+				if "p1" not in prediction['predict'][0].columns:
+					prediction['predict'][0]['p1'] = groundtruth["p1"]
+					prediction['predict'][0]['p2'] = groundtruth["p2"]
 				print(groundtruth)
 				#print(pred)
 				quality = Evaluator(prediction['predict'][0][['p1', 'p2', 'prediction', 'score']], groundtruth).evaluate()

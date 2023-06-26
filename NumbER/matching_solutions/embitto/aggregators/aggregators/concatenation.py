@@ -2,6 +2,8 @@ from NumbER.matching_solutions.embitto.aggregators.aggregators.base_aggregator i
 import torch
 
 class ConcatenationAggregator(BaseAggregator):
+    def __init__(self):
+        super().__init__()
     def aggregate(self, input_embedding_1, input_embedding_2):
         return torch.cat((input_embedding_1, input_embedding_2), dim=1)
     

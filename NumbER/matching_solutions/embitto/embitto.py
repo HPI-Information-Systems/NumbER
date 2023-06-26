@@ -18,19 +18,23 @@ class Embitto(pl.LightningModule):
         self.textual_component = textual_component
         self.numerical_component = numerical_component
         self.fusion_component = fusion_component
-        self.finetuning_step = nn.Linear(256, 2)
+        self.finetuning_step = nn.Linear(480, 2) #!input war 256
+        self.dropout = nn.Dropout(p=0.2)
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()
 
     def forward(self, input_textual, input_numerical, phase: Phase):
         #output_numerical = self.numerical_component(input_numerical)
         #print(input_textual)
-        output_textual = self.textual_component(input_textual)
-        if self.numerical_component is not None:
+        output_textual = self.textual_component(input_textual) if self.textual_component is not None else None
+        if self.numerical_component is not None and self.textual_component is not None:
             output_numerical = self.numerical_component(input_numerical, phase)
-            output = self.fusion_component(output_numerical, output_textual)
-        else:
+            output = self.fusion_component(output_textual, output_numerical)
+        elif self.numerical_component is None and self.textual_component is not None:
             output = output_textual
+        elif self.numerical_component is not None and self.textual_component is None:
+            output = self.numerical_component(input_numerical, phase).type(torch.float32)
         if self.stage == Stage.FINETUNING:
+            #output = self.dropout(output)
             output = self.finetuning_step(output)
         #embeddings = self.fusion_component(output_numerical, output_textual)
         #self.finetuning_step(embeddings)
@@ -38,8 +42,9 @@ class Embitto(pl.LightningModule):
     
     def set_stage(self, stage: Stage):
         self.stage = stage
-        self.textual_component.stage = stage
-        self.textual_component.max_length = 60 if stage == Stage.PRETRAIN else 256
+        if self.textual_component is not None:
+            self.textual_component.stage = stage
+            self.textual_component.max_length = 60 if stage == Stage.PRETRAIN else 256
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()
         if self.numerical_component is not None:
             self.numerical_component.stage = stage
@@ -53,12 +58,11 @@ class Embitto(pl.LightningModule):
         return loss
     
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=3e-5)
+        return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=3e-5,weight_decay=1e-5)
     
     def validation_step(self, batch, batch_idx):
         textual_data, numerical_data, labels = batch
         predictions = self(textual_data, numerical_data, Phase.VALID)
-        
         loss = self.calculate_embedding_loss(predictions, labels, phase="val") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
         print("Loss", loss)
         self.log("val_loss", loss)

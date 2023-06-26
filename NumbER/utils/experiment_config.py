@@ -7,7 +7,7 @@ collections = {
 }
 experiment_configs = {
 'fast': {
-	"x3_numeric": {
+	"earthquakes": {
 		"config": {
 			"embitto": {
 				"train": {
@@ -19,15 +19,15 @@ experiment_configs = {
 			"ditto": {
 				"train": {
 					"run_id": 1,
-					"batch_size": 32,
-					"n_epochs": 20,
+					"batch_size": 50,
+					"n_epochs": 3,
 					"lr": 3e-5,
 					"max_len": 256,
 					"lm": "roberta",
 					"fp16": True,
 				},
 				"test": {
-					"batch_size": 16,
+					"batch_size": 32,
 					"lm": "roberta",
 					"max_len": 256,
 				}
@@ -48,7 +48,7 @@ experiment_configs = {
 		},'blocking':{
 			'sampler': SimilarityBasedSampler,
 			'config': {'n_most_similar':3, 'test_window_size': 10,'train_window_size': 25,'train_fraction': 0.6, 'valid_fraction': 0.2, 'test_fraction': 0.2,
-      		'attributes': ["Price"]}}
+      		'attributes': ["width","height","length","weight_lb","weight_oz","price"]}}
 	}
 },
 'test': {

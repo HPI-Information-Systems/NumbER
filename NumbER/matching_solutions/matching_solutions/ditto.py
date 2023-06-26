@@ -20,11 +20,11 @@ class DittoMatchingSolution(MatchingSolution):
         self.file_format = 'ditto'
         
     def model_train(self, run_id, batch_size, max_len, lr, n_epochs, lm, fp16,i, size=None, da=None, dk=None, summarize=None):
-        random.seed(run_id)
-        np.random.seed(run_id)
-        torch.manual_seed(run_id)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(run_id)
+        # random.seed(run_id)
+        # np.random.seed(run_id)
+        # torch.manual_seed(run_id)
+        # if torch.cuda.is_available():
+        #     torch.cuda.manual_seed_all(run_id)
         print("FP16: ", fp16)
         run_tag = '%s_lm=%s_da=%s_dk=%s_su=%s_size=%s_id=%d' % (self.dataset_name, lm, da,
                 dk, summarize, str(size), run_id)

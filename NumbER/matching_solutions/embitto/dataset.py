@@ -17,8 +17,8 @@ class CompleteDataset(Dataset):
         self.entity_ids = [entity_ids[i] for i in indices]
         # print(self.numerical_data)
         # print(self.textual_data)
-        self.numerical_data = [self.numerical_data[i] for i in indices]
-        #self.numerical_data = self.numerical_data.reindex(entity_ids_df.index)
+        #self.numerical_data = [self.numerical_data[i] for i in indices]
+        self.numerical_data = self.numerical_data.reindex(entity_ids_df.index)
         self.textual_data = [self.textual_data[i] for i in indices]
         self.df = self.df.reindex(entity_ids_df.index)
         self.tokenizer = AutoTokenizer.from_pretrained('roberta-base')
@@ -30,7 +30,6 @@ class CompleteDataset(Dataset):
 
     def __getitem__(self, idx):
         x = self.tokenizer.encode(self.textual_data[idx], max_length=80, truncation=True)
-        
         return x, self.numerical_data.loc[idx].array, self.entity_ids[idx]
     
     @staticmethod
@@ -59,6 +58,7 @@ class PairBasedDataset(Dataset):
                                   text_pair=self.textual_pairs[idx][1],
                                   max_length=256,
                                   truncation=True)
+        #print(self.num)
         return x, self.numerical_pairs.loc[idx].array, self.groundtruth['prediction'][idx]
     
     @staticmethod

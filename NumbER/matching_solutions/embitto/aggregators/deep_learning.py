@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 from NumbER.matching_solutions.embitto.enums import Stage
 from NumbER.matching_solutions.embitto.aggregators.aggregators.base_aggregator import BaseAggregator
 
@@ -13,6 +14,8 @@ class EmbeddimgFusion(nn.Module):
         #self.classifier = nn.Linear(self.roberta.config.hidden_size, num_labels)
 
     def forward(self, textual_embeddings, numerical_embeddings):
+        numerical_embeddings = numerical_embeddings.to(torch.float32)
+        textual_embeddings = textual_embeddings.to(torch.float32)
         embeddings = self.embedding_aggregator.aggregate(textual_embeddings, numerical_embeddings)
         embeddings = self.embedding_output(embeddings)
         return embeddings
