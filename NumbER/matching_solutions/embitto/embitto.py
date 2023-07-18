@@ -8,9 +8,10 @@ from torch import nn
 from NumbER.matching_solutions.embitto.utils.contrastive_loss import contrastive_loss, ContrastiveLoss, calculatue_tuples
 from NumbER.matching_solutions.embitto.enums import Stage, Phase
 import numpy as np
+import wandb
 
 class Embitto(pl.LightningModule):
-    def __init__(self, stage: Stage, numerical_component, textual_component, fusion_component=None, finetuning_step=None, learning_rate: int = 0.00003):
+    def __init__(self, stage: Stage, numerical_component, textual_component, fusion_component=None, finetuning_step=None, learning_rate: int = 0.00003, should_pretrain=False):
         super(Embitto, self).__init__()
         #self.save_hyperparameters()
         self.stage = stage
@@ -18,14 +19,38 @@ class Embitto(pl.LightningModule):
         self.textual_component = textual_component
         self.numerical_component = numerical_component
         self.fusion_component = fusion_component
-        self.finetuning_step = nn.Linear(480, 2) #!input war 256
+        if textual_component is not None and numerical_component is not None:
+            output_size = fusion_component.output_embedding_size
+        elif textual_component is None and numerical_component is not None:
+            output_size = numerical_component.get_outputshape()
+        else:
+            output_size = textual_component.get_outputshape()
+        self.finetuning_step = nn.Linear(output_size, 2)
+        self.softmax = nn.Softmax(dim=1)
         self.dropout = nn.Dropout(p=0.2)
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()
+        self.learning_rate = learning_rate
+        self.should_pretrain = should_pretrain
 
     def forward(self, input_textual, input_numerical, phase: Phase):
         #output_numerical = self.numerical_component(input_numerical)
         #print(input_textual)
-        output_textual = self.textual_component(input_textual) if self.textual_component is not None else None
+        #print("inputtextual", input_textual)
+        #print("inputnumerical", input_numerical)
+        #print(input_numerical)
+        if self.should_pretrain:
+            if self.stage == Stage.PRETRAIN:
+                return self.numerical_component(input_numerical, phase)
+            else:
+                half_of_array = int(len(input_numerical) / 2)
+                input_numerical_1 = input_numerical[:half_of_array]
+                input_numerical_2 = input_numerical[half_of_array:]
+                output_numerical_1 = self.numerical_component(input_numerical_1, phase)
+                output_numerical_2 = self.numerical_component(input_numerical_2, phase)
+                output_numerical = torch.cat((output_numerical_1, output_numerical_2), 0)
+                output_textual = self.textual_component(input_textual) if self.textual_component is not None else None
+                return self.fusion_component(output_textual, output_numerical)
+        output_textual = self.textual_component(input_textual) if self.textual_component is not None and input_textual is not None else None
         if self.numerical_component is not None and self.textual_component is not None:
             output_numerical = self.numerical_component(input_numerical, phase)
             output = self.fusion_component(output_textual, output_numerical)
@@ -34,8 +59,15 @@ class Embitto(pl.LightningModule):
         elif self.numerical_component is not None and self.textual_component is None:
             output = self.numerical_component(input_numerical, phase).type(torch.float32)
         if self.stage == Stage.FINETUNING:
-            #output = self.dropout(output)
             output = self.finetuning_step(output)
+            #print("Output", output)
+            #output_copied = output.cpu().detach().numpy()
+            # for idx,el in enumerate(output_copied):
+            #     if np.isnan(el[0]) or np.isnan(el[1]):
+            #         print("NAN", idx)
+            #         print("inputnumerical", input_numerical[idx])
+            #         print("Output", output[idx])   
+            #output = self.softmax(output)
         #embeddings = self.fusion_component(output_numerical, output_textual)
         #self.finetuning_step(embeddings)
         return output
@@ -53,23 +85,28 @@ class Embitto(pl.LightningModule):
         textual_data, numerical_data, labels = batch
         predictions = self(textual_data, numerical_data, Phase.TRAIN)
         loss = self.calculate_embedding_loss(predictions, labels, phase="train") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
+        # if np.isnan(loss.cpu().detach().item()):
+        #     print("Predictions", predictions)
+            #print("Batch", batch)
         self.log("train_loss", loss)
         print("train_loss", loss)
+        #wandb.log({"train_loss": loss})
         return loss
     
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=0.00003) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=3e-5,weight_decay=1e-5)
+        return torch.optim.Adam(self.parameters(), lr=self.learning_rate) if self.stage == Stage.PRETRAIN else AdamW(self.parameters(), lr=self.learning_rate,weight_decay=1e-5)
     
     def validation_step(self, batch, batch_idx):
         textual_data, numerical_data, labels = batch
         predictions = self(textual_data, numerical_data, Phase.VALID)
         loss = self.calculate_embedding_loss(predictions, labels, phase="val") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
+        # if np.isnan(loss.cpu().detach().item()):
+        #     print("Predictions", predictions)
         print("Loss", loss)
         self.log("val_loss", loss)
         return loss
     
     def predict_step(self, batch, batch_idx):
-        print("predict ste", batch)
         textual_data, numerical_data, labels = batch
         result = self(textual_data, numerical_data, Phase.TEST)
         return result

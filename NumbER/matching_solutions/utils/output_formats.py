@@ -64,7 +64,8 @@ class EmbittoFormat(OutputFormat):
         records, goldstandard = self.create_output()
         records.to_csv(filepath, index=False)
         goldstandard.to_csv(f"{filepath[:-4]}_goldstandard.csv", index=False)
-        return f"{filepath[:-4]}_goldstandard.csv", filepath
+        print("WRITING TO FILE", filepath)
+        return filepath, f"{filepath[:-4]}_goldstandard.csv"
 
 class DeepMatcherFormat(OutputFormat):
     def __init__(self, goldstandard: pd.DataFrame, records: pd.DataFrame):

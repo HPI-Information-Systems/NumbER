@@ -3,118 +3,127 @@ from NumbER.matching_solutions.embitto.enums import Stage
 from NumbER.matching_solutions.embitto.data_loader import EmbittoDataModule
 from NumbER.matching_solutions.matching_solutions.matching_solution import MatchingSolution
 from NumbER.matching_solutions.embitto.aggregators.aggregators.concatenation import ConcatenationAggregator
-from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_ditto_formatter
+from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_ditto_formatter, numeric_prompt_formatter
 from NumbER.matching_solutions.embitto.aggregators.deep_learning import EmbeddimgFusion
 from pytorch_lightning.callbacks import Callback
-
+from pytorch_lightning.loggers import WandbLogger
 from sklearn.cluster import DBSCAN
+import wandb
+import os
+from sklearn import metrics
 import matplotlib.pyplot as plt
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning import loggers as pl_loggers
 from sklearn.neighbors import KNeighborsClassifier
 from transformers import AdamW
 import numpy as np
-from NumbER.matching_solutions.embitto.numerical_components.dice import DICEEmbeddings, DICEEmbeddingAggregator
+from NumbER.matching_solutions.embitto.numerical_components.base_component import BaseNumericComponent
 import torch
 from NumbER.matching_solutions.utils.transitive_closure import convert_to_pairs, calculate_from_entity_ids
 import pytorch_lightning as pl
 import pandas as pd
 from NumbER.matching_solutions.embitto.textual_components.base_roberta import BaseRoberta
 from pytorch_lightning.callbacks import ModelCheckpoint
+import random
 
 class EmbittoMatchingSolution(MatchingSolution):
 	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path):
 		super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
 		self.file_format = 'embitto'
   
-	def model_train(self, numerical_component, textual_config, fusion_component, train_goldstandard_path, valid_goldstandard_path, test_goldstandard_path,i, should_finetune=True):
+	def model_train(self, numerical_config, wandb_id, include_numerical_features_in_textual, seed, textual_config, pretrain_batch_size, num_pretrain_epochs, finetune_batch_size, num_finetune_epochs, train_goldstandard_path, valid_goldstandard_path, test_goldstandard_path,i, output_embedding_size=256, lr=3e-5,should_pretrain=False, should_finetune=True):
+		random.seed(seed)
+		np.random.seed(seed)
+		torch.manual_seed(seed)
+		if torch.cuda.is_available():
+			torch.cuda.manual_seed(seed)
+			torch.cuda.manual_seed_all(seed)
+			torch.backends.cudnn.deterministic = True
+			torch.backends.cudnn.benchmark = False
 		stage = Stage.PRETRAIN
 		train_record_data = pd.read_csv(self.train_path)
+		print("train", train_record_data)
+		print("train_matches", train_goldstandard_path)
 		valid_record_data = pd.read_csv(self.valid_path)
 		test_record_data = pd.read_csv(self.test_path)
 		train_goldstandard_data = pd.read_csv(train_goldstandard_path)
 		valid_goldstandard_data = pd.read_csv(valid_goldstandard_path)
 		test_goldstandard_data = pd.read_csv(test_goldstandard_path)
-		textual_embedding_size = 256
 		numerical_embedding_size = 40
-		textual_max_length = 256
-		textual_component = BaseRoberta(textual_max_length, textual_embedding_size, Stage.PRETRAIN)
-		
-		textual_formatter = textual_component.get_formatter()
-		numerical_formatter = DICEEmbeddingAggregator.get_formatter(stage)
-		self.train_data = self.process_dataframe(train_record_data, train_goldstandard_data, textual_formatter, numerical_formatter, stage=Stage.PRETRAIN)
-		numeric_order = self.train_data["numerical_data"].columns
-		self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_formatter, numerical_formatter, stage=Stage.PRETRAIN)
-		self.valid_data["numerical_data"] = self.valid_data["numerical_data"][numeric_order]
-		self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_formatter, numerical_formatter, stage=Stage.PRETRAIN)
-		self.test_data["numerical_data"] = self.test_data["numerical_data"][numeric_order]
-		train_dice_config = self.prepare_dice_embeddings(self.train_data["numerical_data"])
-		valid_dice_config = self.prepare_dice_embeddings(self.valid_data["numerical_data"])
-		test_dice_config = self.prepare_dice_embeddings(self.test_data["numerical_data"])
-		numerical_component = DICEEmbeddingAggregator(
-			train_dice=DICEEmbeddings(train_dice_config, numerical_embedding_size),
-			valid_dice=DICEEmbeddings(valid_dice_config, numerical_embedding_size),
-			test_dice=DICEEmbeddings(test_dice_config, numerical_embedding_size),
-		)
-		numerical_formatter = numerical_component.get_formatter(stage=Stage.PRETRAIN)
-		fusion_component = EmbeddimgFusion(
-			embedding_combinator=ConcatenationAggregator,
-			textual_input_embedding_size = textual_embedding_size,#! remove *0
-			numerical_input_embedding_size = (len(numerical_component.train_dice.embeddings)-1) * numerical_embedding_size,#*2, #todo wieder einblenden
-			output_embedding_size = 256
-		)
-		print("LENGTH", (len(numerical_component.train_dice.embeddings)-1) * numerical_embedding_size)
+		textual_component = textual_config['model'](textual_config['max_length'], textual_config['embedding_size'], Stage.PRETRAIN)
+
+		textual_pretrain_formatter = textual_config['pretrain_formatter']
+		numerical_pretrain_formatter = numerical_config['pretrain_formatter']
+		textual_finetune_formatter = textual_config['finetune_formatter']
+		numerical_finetune_formatter = numerical_config['finetune_formatter']
+		self.train_data = self.process_dataframe(train_record_data, train_goldstandard_data, textual_pretrain_formatter, numerical_pretrain_formatter, include_numerical_features_in_textual, stage=Stage.PRETRAIN)
+		numeric_order = self.train_data["numerical_data"].columns if self.train_data["numerical_data"] is not None else None
+		self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_pretrain_formatter, numerical_pretrain_formatter,include_numerical_features_in_textual, stage=Stage.PRETRAIN)
+		self.valid_data["numerical_data"] = self.valid_data["numerical_data"][numeric_order] if self.valid_data["numerical_data"] is not None else None
+		self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_pretrain_formatter, numerical_pretrain_formatter,include_numerical_features_in_textual, stage=Stage.PRETRAIN)
+		self.test_data["numerical_data"] = self.test_data["numerical_data"][numeric_order] if self.test_data["numerical_data"] is not None else None
+		if numerical_config['model'] is not None:
+			numerical_component = numerical_config['model'](self.train_data["numerical_data"], self.valid_data["numerical_data"], self.test_data["numerical_data"], numerical_config['embedding_size'], should_pretrain=should_pretrain)
+			fusion_component = EmbeddimgFusion(
+				embedding_combinator=ConcatenationAggregator,
+				textual_input_embedding_size = textual_config['embedding_size'],
+				numerical_input_embedding_size = numerical_component.get_outputshape(),#*2,
+				output_embedding_size = output_embedding_size
+			)
+		else:
+			numerical_component = None
+			fusion_component = None
 		# numerical_component = None
 		# fusion_component = None
+		#textual_component = None
+		print("NUMERICAL", numerical_component)
+		print("TEXTUAL", textual_component)
+		print("FUSION", fusion_component)
 		embitto = Embitto(
       		stage=Stage.PRETRAIN,
         	numerical_component=numerical_component,
          	textual_component=textual_component,
-          	fusion_component=fusion_component
+          	fusion_component=fusion_component,
+			learning_rate=lr,
+			should_pretrain=should_pretrain,
         )
-		# embitto.optimizer=AdamW(embitto.parameters(), lr=3e-5)
-		# embitto, optimizer = amp.initialize(embitto, embitto.optimizer, opt_level='O2')
-		# embitto.optimizer = optimizer
-		checkpoint_callback_1 = ModelCheckpoint(
-			monitor="val_loss",
-			mode="min",
-			save_top_k=1,
-			dirpath="saved_models/",
-			filename="best_model_pretran_x3_numeric",
-		)
-		checkpoint_callback_2 = ModelCheckpoint(
-			monitor="val_loss",
-			mode="min",
-			save_top_k=1,
-			dirpath="saved_models/",
-			filename="best_model_finetune_x3_numeric",
-		)
-		self.data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.PRETRAIN)
+		
+		self.data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.PRETRAIN, batch_size=pretrain_batch_size)
 		logger = pl_loggers.CSVLogger('logs/', name='embitto')
-		checkpoint_path = "saved_models/best_model_finetune-v1.ckpt"  # Path to the saved model checkpoint
 		#embitto = embitto.load_from_checkpoint(checkpoint_path, stage=Stage.FINETUNING, numerical_component=numerical_component, textual_component=textual_component, fusion_component=fusion_component)
-		trainer = pl.Trainer(accelerator="gpu", devices=1, logger=logger, max_epochs=50, callbacks=[checkpoint_callback_1])#, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
-		#trainer.fit(embitto, self.data)
+		trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=num_pretrain_epochs)#, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
+		if should_pretrain:
+			print("HALLO")
+			trainer.fit(embitto, self.data)
+		
 		print("STAGE", should_finetune)	
 		stage = Stage.FINETUNING
 		if should_finetune:
 			embitto.set_stage(stage)
-			textual_formatter = textual_component.get_formatter() if textual_component is not None else pair_based_ditto_formatter #!remove this!
-			numerical_formatter = numerical_component.get_formatter(stage=Stage.FINETUNING) if numerical_component is not None else dummy_formatter
-			self.train_data = self.process_dataframe(train_record_data, train_goldstandard_data, textual_formatter, numerical_formatter, stage)
-			self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_formatter, numerical_formatter, stage)
-			self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_formatter, numerical_formatter, stage)
-			self.data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.FINETUNING)
-			trainer = pl.Trainer(accelerator="gpu",precision=16, devices=1, max_epochs=30,callbacks=[PlotLosses()])#,logger=logger, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
+			self.train_data = self.process_dataframe(train_record_data, train_goldstandard_data, textual_finetune_formatter, numerical_finetune_formatter, include_numerical_features_in_textual,stage, train_record_data)
+			self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_finetune_formatter, numerical_finetune_formatter,include_numerical_features_in_textual, stage, train_record_data)
+			self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_finetune_formatter, numerical_finetune_formatter,include_numerical_features_in_textual, stage, train_record_data)
+			self.data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.FINETUNING, batch_size=finetune_batch_size)
+			checkpoint_callback_1 = ModelCheckpoint(
+						monitor="val_loss",
+						mode="min",
+						save_top_k=1,
+						dirpath="saved_models/",
+						filename=f"best_model_correct_{wandb_id}",
+					)
+			trainer = pl.Trainer(accelerator="gpu",precision="16-mixed", devices=1, logger=WandbLogger(), max_epochs=num_finetune_epochs,callbacks=[checkpoint_callback_1])#,logger=logger, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
 			trainer.fit(embitto, self.data)
-
+			embitto = embitto.load_from_checkpoint(checkpoint_callback_1.best_model_path, stage=Stage.FINETUNING, numerical_component=numerical_component,learning_rate=lr, textual_component=textual_component, fusion_component=fusion_component, should_pretrain=should_pretrain)
 		return None, embitto, None, None
 
 	def model_predict(self, model, cluster, train_goldstandard_path, valid_goldstandard_path, test_goldstandard_path):
 		trainer = pl.Trainer()
 		#eval = trainer.test(model, self.data)
 		#print("Eval: ", eval)
-		predict_data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.PRETRAIN if cluster else Stage.FINETUNING)
+		#predict_data = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.test_data, stage=Stage.PRETRAIN if cluster else Stage.FINETUNING)
+		valid = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.valid_data, stage=Stage.FINETUNING)
+		valid_predictions = trainer.predict(model, valid)
+		valid_predictions = torch.cat(valid_predictions, dim=0)
 		predict_data = self.data
 		test_predictions = trainer.predict(model, predict_data)
 		test_predictions = torch.cat(test_predictions, dim=0)
@@ -128,63 +137,76 @@ class EmbittoMatchingSolution(MatchingSolution):
 			pairs["score"] = 1.0
 		else:
 			test_predictions = test_predictions.softmax(dim=1)[:, 1]
+			valid_predictions = valid_predictions.softmax(dim=1)[:, 1]
+			best_th = 0.5
+			f1 = 0.0 # metrics.f1_score(all_y, all_p)
+
+			for th in np.arange(0.0, 1.0, 0.05):
+				pred = [1 if p > th else 0 for p in valid_predictions]
+				new_f1 = metrics.f1_score(self.valid_data["matches"]["prediction"].values, pred)
+				if new_f1 > f1:
+					f1 = new_f1
+					best_th = th
 			pairs = self.data.test_dataset.groundtruth
 			pairs['score'] = test_predictions
-			pairs["prediction"] = pairs["score"] > 0.5
-		pairs.to_csv("pairs.csv")
+			pairs["prediction"] = [1 if p > best_th else 0 for p in test_predictions]
+		print("Wandb id: ", wandb.run.id)
+		path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/saved_models"
+		if os.path.exists(f"{path}/best_model_correct_{wandb.run.id}.ckpt"):
+			os.remove(f"{path}/best_model_correct_{wandb.run.id}.ckpt")
 		return {'predict': [pairs], 'evaluate': None}
 
 		#entity_ids = neigh.predict(test_predictions)#returned die entity ids
 		#mapping zu test_data machen
 		#model(data=self.data, stage=Stage.FINETUNE)
 		
-	def prepare_dice_embeddings(self, data: pd.DataFrame):
-		dice_config = []
-		print(data)
-		for column in data.columns:
-			lower_bound = data[column].quantile(.2)
-			upper_bound = data[column].quantile(.8)
-			dice_config.append({
-				'embedding_dim': 10,
-				'lower_bound': lower_bound,
-				'upper_bound': upper_bound
-			})
-		return dice_config
-
-	def get_numeric_columns(self,df):
+	@staticmethod
+	def get_numeric_columns(df):
 		numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
 		cols = list(df.select_dtypes(include=numerics).columns)
 		cols.append("id") if "id" not in cols else None
 		print("NUMERIC COLS", cols)
+		#return df.columns #!change this
+		if len(cols) == 1:
+			if cols[0] != "id":
+				print("ALAAARM", cols)
+				return None
+			return None
 		return cols
-
-	def get_textual_columns(self, df):
-		data = df.select_dtypes(include=['object', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']) #! remove
+	@staticmethod
+	def get_textual_columns(df, include_numerical_features_in_textual):
+		data = df.select_dtypes(include=['object'])#, 'int16', 'int32', 'int64', 'float16', 'float32', 'float64'])
 		cols = list(data.columns)
 		cols.append("id") if "id" not in cols else None
 		print("TEXTUAL COLS", cols)
-		return cols
+		if include_numerical_features_in_textual:
+			return df.columns
+		else:
+			if len(cols) == 1:
+				if cols[0] != "id":
+					print("ALAAARM", cols)
+					return None
+				return None
+			return cols
 
-	def process_dataframe(self, df: pd.DataFrame, matches: pd.DataFrame, textual_formatter, numerical_formatter = dummy_formatter, stage = Stage.PRETRAIN):
-		textual_columns = self.get_textual_columns(df)
+	def process_dataframe(self, df: pd.DataFrame, matches: pd.DataFrame, textual_formatter, numerical_formatter = dummy_formatter,include_numerical_features_in_textual=True, stage = Stage.PRETRAIN, train_data=None):
+		textual_columns = self.get_textual_columns(df, include_numerical_features_in_textual)
 		numerical_columns = self.get_numeric_columns(df)
-		textual_data = df[textual_columns]
-		numerical_data = df[numerical_columns]
+		print(numerical_columns)
+		print("df", df)
+
+		textual_data = df[textual_columns] if textual_columns is not None else None
+		numerical_data = df[numerical_columns] if numerical_columns is not None else None
 		if stage == Stage.FINETUNING:
-			textual_data = self.build_pairs(textual_data, matches)
-			numerical_data = self.build_pairs(numerical_data, matches)
-			print("textual_data", textual_data)
-			print("numerical_data", numerical_data)
-			print("textual cols", textual_data.columns)
-			print("numerical cols", numerical_data.columns)
-			print("SABA")
-		textual_data = textual_formatter(textual_data)
-		numerical_data = numerical_formatter(numerical_data)
-		print("NUMERICAL", numerical_data)
-		#numerical_data = textual_formatter(numerical_data) #todo warum war das drin
-		# print("Textual data: ", textual_data)
-		# print("Numerical data: ", numerical_data)
-		# numerical_data = self.get_values(df, numerical_columns)
+			textual_data = self.build_pairs(textual_data, matches) if textual_data is not None else None
+			numerical_data = self.build_pairs(numerical_data, matches) if numerical_data is not None else None
+		if textual_formatter.__name__ == "complete_prompt_formatter" or textual_formatter.__name__ == "complete_prompt_formatter_min_max_scaled":
+			print("tr", train_data)
+			textual_data = textual_formatter(data=textual_data, train_data=train_data) if textual_data is not None else None
+		else:
+			textual_data = textual_formatter(textual_data) if textual_data is not None else None
+		numerical_data = numerical_formatter(numerical_data) if numerical_data is not None else None
+		print("textualformatter", textual_formatter)
 		return {'all_data': df, 'numerical_data': numerical_data, 'textual_data': textual_data, 'matches': matches}
 
 	def build_pairs(self, df: pd.DataFrame, matches: pd.DataFrame):
@@ -198,30 +220,3 @@ class EmbittoMatchingSolution(MatchingSolution):
 			record_2 = df[df["id"] == match['p2']]
 			pairs.append((*record_1.values[0], *record_2.values[0]))
 		return pd.DataFrame(pairs, columns=left_columns + right_columns)
-
-
-class PlotLosses(Callback):
-    def __init__(self):
-        super().__init__()
-        self.train_losses = []
-        self.val_losses = []
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        self.train_losses.append(trainer.callback_metrics.get('train_loss'))
-
-    def on_validation_epoch_end(self, trainer, pl_module):
-        self.val_losses.append(trainer.callback_metrics.get('val_loss'))
-
-    def on_fit_end(self, trainer, pl_module):
-        train_losses = [train_loss.cpu() for train_loss in self.train_losses]
-        val_losses = [val_loss.cpu() for val_loss in self.val_losses]
-        print("dawd", self.train_losses)
-        plt.plot(train_losses, label='train_loss')
-        plt.plot(val_losses, label='val_loss')
-        plt.xlabel('epoch')
-        plt.ylabel('loss')
-        plt.legend()
-        plt.savefig('loss_plot_distance.png')
-        plt.close()
-
-   

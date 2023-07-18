@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
-import sys
 import math
 from NumbER.matching_solutions.embitto.enums import Phase, Stage
 from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_numeric_formatter
 import torch
+from NumbER.matching_solutions.embitto.numerical_components.base_component import BaseNumericComponent
 
 class DICEEmbeddings():
     def __init__(self, config, d):
@@ -23,8 +23,8 @@ class DICEEmbeddings():
                 if isinstance(number, tuple):
                     embedding_1 = self.embeddings[idx_2].make_dice(number[0])
                     embedding_2 = self.embeddings[idx_2].make_dice(number[1])
-                    embeddings = np.subtract(embedding_1, embedding_2) 
-                    #embeddings = np.concatenate((embedding_1,embedding_2))
+                    #embeddings = np.subtract(embedding_1, embedding_2) 
+                    embeddings = np.concatenate((embedding_1,embedding_2))
                 else:
                     embeddings = self.embeddings[idx_2].make_dice(number)
                 embed.append(embeddings)
@@ -75,11 +75,12 @@ class DICE:
         # return dice.tolist()
         return dice
     
-class DICEEmbeddingAggregator():
-    def __init__(self, train_dice:DICEEmbeddings, valid_dice: DICEEmbeddings, test_dice: DICEEmbeddings):
-        self.train_dice = train_dice
-        self.valid_dice = valid_dice
-        self.test_dice = test_dice
+class DICEEmbeddingAggregator(BaseNumericComponent):
+    def __init__(self, train_data, valid_data, test_data, dimensions):
+        self.train_dice = DICEEmbeddings(self.prepare_dice_embeddings(train_data), dimensions)
+        self.valid_dice = DICEEmbeddings(self.prepare_dice_embeddings(valid_data), dimensions)
+        self.test_dice = DICEEmbeddings(self.prepare_dice_embeddings(test_data), dimensions)
+        self.set_outputshape(2 * dimensions * (len(self.train_dice.embeddings)-1))#-1 because we remove id afterwards
     
     def __call__(self, numbers, phase: Phase):
         if phase == phase.TEST:
@@ -88,6 +89,19 @@ class DICEEmbeddingAggregator():
             return self.train_dice(numbers)
         elif phase == phase.VALID:
             return self.valid_dice(numbers)
+        
+    def prepare_dice_embeddings(self, data: pd.DataFrame):
+        dice_config = []
+        for column in data.columns:
+            lower_bound = data[column].quantile(.2)
+            upper_bound = data[column].quantile(.8)
+            dice_config.append({
+				'embedding_dim': 10,
+				'lower_bound': lower_bound,
+				'upper_bound': upper_bound
+			})
+        return dice_config
+    
     @staticmethod
     def get_formatter(stage: Stage):
         if stage == stage.PRETRAIN:

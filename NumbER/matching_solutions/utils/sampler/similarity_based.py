@@ -12,6 +12,7 @@ class SimilarityBasedSampler(BaseSampler):
         super().__init__(records_path, goldstandard_path)
         self.all_pairs = set()
         self.name = "similarity"
+        print("GONNA BE SIMILAR")
         #self.distance_matrix = squareform(np.load(distance_path))
     
     def get_n_most_similar_records(self,record_id, available_records, n):
@@ -47,7 +48,7 @@ class SimilarityBasedSampler(BaseSampler):
     def sample(self, *args):
         config = args[0]
         print("config", config)
-        self.distance_matrix = squareform(np.load(os.path.join(pathlib.Path(self.records_path).parent,'similarity.npy')))
+        self.distance_matrix = squareform(np.load(os.path.join(pathlib.Path(self.records_path).parent,'similarity_cosine.npy')))
         naive_sampler = NaiveSampler(self.records_path, self.goldstandard_path)
         print("LOading naive sampler with paths", self.records_path, self.goldstandard_path)
         train_records, valid_records, test_records, train_matches, valid_matches, test_matches = naive_sampler.sample_records(config)

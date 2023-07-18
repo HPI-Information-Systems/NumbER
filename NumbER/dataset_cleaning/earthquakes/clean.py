@@ -34,7 +34,7 @@ def multiple_sources(df):
 earthquakes = pd.read_csv('temp.csv')
 #groundtruth = two_sources(earthquakes)
 groundtruth = multiple_sources(earthquakes)
-earthquakes.drop(columns=['event_id', 'time','longitude','latitude', 'datasource'], inplace=True)
+#earthquakes.drop(columns=['event_id', 'time','longitude','latitude', 'datasource'], inplace=True)
 earthquakes['id'] = earthquakes.index
-groundtruth.to_csv('groundtruth_associated_us.csv', index=False)
-earthquakes.to_csv('earthquakes_associated_us.csv', index=False)
+groundtruth.to_csv('groundtruth_associated_us_2.csv', index=False)
+earthquakes.to_csv('earthquakes_associated_us_2.csv', index=False)

@@ -16,10 +16,10 @@ import wandb
 
 #from NumbER.matching_solutions.matching_solutions.ditto import DittoMatchingSolution
 #, DeepMatcherMatchingSolution
-from NumbER.utils.experiment_config import experiment_configs
+from NumbER.utils.experiment_config import experiment_configs, combinations
 from NumbER.matching_solutions.matching_solutions.evaluation.evaluator import Evaluator
 
-def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
+def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iteration=None):
 	print("TAG", tag)
 	torch.cuda.empty_cache()
 	gc.collect()
@@ -31,12 +31,13 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 	print("Base input path", base_input_path)
 	print("Base output path", base_output_path)
 	print("xperiment config", experiment_config)
-
+	if dataset != None:
+		experiment_config = {dataset: experiment_config[dataset]}
 	for dataset, paths in experiment_config.items():
 		results_f1 = []
 		times = []
 		print(torch.cuda.memory_summary(device=None, abbreviated=False))
-		for i in range(1):#5):
+		for i in range(5):#5):
 			#if iteration is not None:
 			#	i = int(iteration)
 			print("DOING it for ", dataset, " run ", i)
@@ -49,7 +50,8 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 					**paths['config'][matching_solution]["train"],
 					'dataset': dataset,
 					'matching_solution': matching_solution,
-					'run': str(i)
+					'run': str(i),
+					'dataset_sampler': paths['blocking']['sampler'].__name__,
 				},
 			)
 			try: 
@@ -83,8 +85,10 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				paths['blocking']['config']['constant_based'] = True
 				sampler = paths['blocking']['sampler'](record_path, matches_path)
 				train_formatter, valid_formatter, test_formatter = sampler.create_format(matching_solution, paths['blocking']['config'])
+				print("train_FORMATTER", train_formatter)
 				pd.read_csv(record_path).replace({"\t", ""}, regex=True).to_csv(os.path.join(dataset_path, 'dataset.csv'), index=False)
 				(train_path, train_goldstandard_path), (valid_path, valid_goldstandard_path), (test_path, test_goldstandard_path) = train_formatter.write_to_file(os.path.join(dataset_path, f'train_{i}')), valid_formatter.write_to_file(os.path.join(dataset_path, f'valid_{i}')), test_formatter.write_to_file(os.path.join(dataset_path, f'test_{i}'))
+
 				print("Train path", train_path, "valid path", valid_path, "test path", test_path)
 				if train_goldstandard_path is not None and valid_goldstandard_path is not None and test_goldstandard_path is not None:
 					config['test']['train_goldstandard_path'] = train_goldstandard_path
@@ -104,6 +108,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 				try: 
 					print("Training model...", file=sys.stdout)
 					config['train']['i'] = str(i)
+					wandb_id = wandb.run.id
+					config['train']['wandb_id'] = wandb_id
+					config['train']['seed'] = 1
 					training_time = time.time()
 					print("Config", config['train'])
 					best_f1, model, threshold, train_time = solution.model_train(**config['train'])
@@ -157,15 +164,22 @@ def main(matching_solution, dataset_config, use_wandb, tag, iteration=None):
 
 				print("Got Quality", quality)
 				#pred.rename(columns={'match': 'prediction'},inplace=True, errors='raise')
-				pred = pd.merge(test_formatter.goldstandard.reset_index(), prediction['predict'][0].reset_index(), left_index=True, right_index=True)[['p1', 'p2', 'prediction_y', 'score']]
-				pred.rename(columns={'prediction_y': 'prediction'},inplace=True, errors='raise')
-				pred.to_csv(os.path.join(matching_solution_path, dataset + "_" + str(i) + '.csv'), index=False)
-				print("Wrote prediction", pred)
+				wandb.finish()
+				continue
+				result_df = pd.DataFrame()
+				result_df['p1'] = test_formatter.goldstandard['p1']
+				result_df['p2'] = test_formatter.goldstandard['p2']
+				result_df['prediction'] = prediction['predict'][0]['prediction']
+				result_df['score'] = prediction['predict'][0]['score']
+				print("For debug 1", test_formatter.goldstandard)
+				print("For debug", result_df)
+				#pred = pd.merge(test_formatter.goldstandard.reset_index(), prediction['predict'][0].reset_index(), left_index=True, right_index=True)[['p1', 'p2', 'prediction_y', 'score']]
+				result_df.to_csv(os.path.join(matching_solution_path, dataset + "_" + str(i) + '.csv'), index=False)
+				print("Wrote prediction", result_df)
 				test_formatter.goldstandard.to_csv(os.path.join(matching_solution_path, dataset + f'_goldstandard_{i}.csv'), index=False)
 				print(f"On dataset {dataset} with matching solution {matching_solution} in time {train_time} scored {prediction['evaluate']} in iteration {i}", file=sys.stdout)
 				#shutil.make_archive('coded', 'zip', base_output_path)
 				print("Finished", i)
-				wandb.finish()
 			except Exception as e:
 				print(traceback.format_exc(), file=sys.stdout)
 				print(f"An error occurec: {e}", file=sys.stdout)
@@ -200,7 +214,22 @@ if __name__ == '__main__':
 	parser.add_argument("--tag")
 	args = parser.parse_args()
 	try:
-		main(args.matching_solution, args.datasets, args.wandb, args.tag, args.iteration)
+		if args.matching_solution == "embitto":
+			for combination in combinations:
+				for finetune_formatter in combination["finetune_formatter"]:
+					for dataset, config in experiment_configs[args.datasets].items():
+						if "all" in dataset and combination["numerical_model"] is not None:
+							continue
+						config = experiment_configs[args.datasets][dataset]["config"]["embitto"]["train"]
+						config["numerical_config"]["model"] = combination["numerical_model"]
+						config["textual_config"]["finetune_formatter"] = finetune_formatter
+						config["include_numerical_features_in_textual"] = combination["include_numerical_features_in_textual"]
+						config["textual_config"]["embedding_size"] = combination["textual_embedding_size"]
+						main(args.matching_solution, args.datasets, args.wandb, args.tag, dataset, args.iteration)
+		else:
+			main(args.matching_solution, args.datasets, args.wandb, args.tag, None, args.iteration)
+		#path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/saved_models"
+		#print(f"{path}/best_model_correct_{wandb_id}.ckpt")
 	except Exception as e:
 		print(traceback.format_exc(), file=sys.stdout)
 		print(f"An error occurec: {e}", file=sys.stdout)
