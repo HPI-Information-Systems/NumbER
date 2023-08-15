@@ -66,7 +66,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 			numerical_component = numerical_config['model'](self.train_data["numerical_data"], self.valid_data["numerical_data"], self.test_data["numerical_data"], numerical_config['embedding_size'], should_pretrain=should_pretrain)
 			fusion_component = EmbeddimgFusion(
 				embedding_combinator=ConcatenationAggregator,
-				textual_input_embedding_size = textual_config['embedding_size'],
+				textual_input_embedding_size = textual_config['embedding_size'] if self.train_data["textual_data"] is not None else 0,
 				numerical_input_embedding_size = numerical_component.get_outputshape(),#*2,
 				output_embedding_size = output_embedding_size
 			)
@@ -200,8 +200,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 		if stage == Stage.FINETUNING:
 			textual_data = self.build_pairs(textual_data, matches) if textual_data is not None else None
 			numerical_data = self.build_pairs(numerical_data, matches) if numerical_data is not None else None
-		if textual_formatter.__name__ == "complete_prompt_formatter" or textual_formatter.__name__ == "complete_prompt_formatter_min_max_scaled":
-			print("tr", train_data)
+		if textual_formatter.__name__ in ["complete_prompt_formatter", "complete_prompt_formatter_min_max_scaled", "text_sim_formatter", "textual_min_max_scaled"]:
 			textual_data = textual_formatter(data=textual_data, train_data=train_data) if textual_data is not None else None
 		else:
 			textual_data = textual_formatter(textual_data) if textual_data is not None else None
@@ -218,5 +217,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 		for _, match in matches.iterrows():
 			record_1 = df[df["id"] == match['p1']]
 			record_2 = df[df["id"] == match['p2']]
+			assert len(record_1) == 1
+			assert len(record_2) == 1
 			pairs.append((*record_1.values[0], *record_2.values[0]))
 		return pd.DataFrame(pairs, columns=left_columns + right_columns)

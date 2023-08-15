@@ -55,7 +55,8 @@ class PairBasedDataset(Dataset):
         if self.textual_pairs is None:
             print("Textual pairs is NONE. Please check...")
             assert len(self.numerical_pairs) == len(self.groundtruth)
-        elif self.numerical_pairs is None:
+        elif self.numerical_pairs is None or len(self.numerical_pairs) == 0:
+            self.numerical_pairs = None
             assert len(self.textual_pairs) == len(self.groundtruth)
         else:
             assert len(self.numerical_pairs) == len(self.textual_pairs) == len(self.groundtruth)
@@ -64,12 +65,23 @@ class PairBasedDataset(Dataset):
         return len(self.numerical_pairs) if self.textual_pairs is None else len(self.textual_pairs)
     
     def __getitem__(self, idx):
-        #print(self.textual_pairs)
         if self.textual_pairs is None:
             textual_pairs = None
         else:
-            textual_pairs = self.tokenizer.encode(text=self.textual_pairs[idx][0],
+            try:
+                #print("TEXTUAL PAIRS", np.shape(self.textual_pairs[idx]))
+                if np.shape(self.textual_pairs[idx])[0] == 2:
+                    textual_pairs = self.tokenizer.encode(text=self.textual_pairs[idx][0],
                                   text_pair=self.textual_pairs[idx][1],
+                                  max_length=256,
+                                  truncation=True)
+                else:
+                    textual_pairs = self.tokenizer.encode(text=self.textual_pairs[idx],
+                                  max_length=256,
+                                  truncation=True)
+            except Exception as e:
+                #print("ERROR", e)
+                textual_pairs = self.tokenizer.encode(text=self.textual_pairs[idx],
                                   max_length=256,
                                   truncation=True)
         if self.numerical_pairs is not None:
@@ -80,7 +92,6 @@ class PairBasedDataset(Dataset):
         else:
             numeric = None
         #! CHANGE numeric (second argument) BACK to self.numerical_pairs.loc[idx].array
-        #print("textual pairs", textual_pairs)
         return textual_pairs, numeric, self.groundtruth['prediction'][idx]
 
     #!CHange

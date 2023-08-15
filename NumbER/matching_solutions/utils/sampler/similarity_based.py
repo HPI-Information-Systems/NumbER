@@ -73,8 +73,8 @@ class SimilarityBasedSampler(BaseSampler):
             similarity_pairs = similarity_pairs[similarity_pairs['prediction'] == 0]
             all_pairs = pd.concat([similarity_pairs, matches], ignore_index=True)
             result.append(all_pairs) 
-        print(len(result[0]), len(result[1]), len(result[2]))
         self.check_no_leakage(result[0], result[1], result[2])
+        #return result[0], result[1], result[2]#!Do this again
         return result[0], result[1], result[2]
     
     def convert_to_dataframe(self, pairs, match_status):

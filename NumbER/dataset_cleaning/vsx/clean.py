@@ -26,3 +26,4 @@ data.to_csv('./features_combined.csv', index=False)
 data.drop(columns=['Name', 'Type', 'n_max', 'n_min', 'f_min', 'l_min'], inplace=True)
 data.to_csv('./features.csv', index=False)
 pd.DataFrame(result).to_csv('./groundtruth.csv', index=False)
+#also removed in _small the attributes: 'u_max', 'f_min', 'l_min', 'u_min', 'u_Epoch', 'l_Period', 'u_Period'

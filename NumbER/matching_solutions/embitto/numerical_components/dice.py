@@ -76,7 +76,7 @@ class DICE:
         return dice
     
 class DICEEmbeddingAggregator(BaseNumericComponent):
-    def __init__(self, train_data, valid_data, test_data, dimensions):
+    def __init__(self, train_data, valid_data, test_data, dimensions, should_pretrain):
         self.train_dice = DICEEmbeddings(self.prepare_dice_embeddings(train_data), dimensions)
         self.valid_dice = DICEEmbeddings(self.prepare_dice_embeddings(valid_data), dimensions)
         self.test_dice = DICEEmbeddings(self.prepare_dice_embeddings(test_data), dimensions)

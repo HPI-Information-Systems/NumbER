@@ -3,6 +3,7 @@ from scipy.spatial.distance import pdist, euclidean, cosine
 import pandas as pd
 import numpy as np
 import os
+import traceback
 import time
 from numba import jit
 from NumbER.matching_solutions.matching_solutions.embitto import EmbittoMatchingSolution
@@ -73,9 +74,12 @@ def calculate_similarity_matrix(numerical_df, textual_df, filename):
         #numerical_df = numerical_df.to_numpy().astype(np.float)
         for col in textual_df.columns:
             vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams)
+            print(textual_df[col].values.astype('U'))
+            print("Col", col)
+            if col == "n_max":
+                continue
             values = vectorizer.fit_transform(textual_df[col].values.astype('U')).toarray()
             start_time = time.time()
-            print("Col", col)
             sim = pdist(values, numerical_similarity_func)
             print("--- %s seconds ---" % (time.time() - start_time))
             similarities.append(sim)
@@ -124,7 +128,7 @@ if __name__ == '__main__':
     #     textual_df = df[textual_columns]
     #     numerical_df.drop(columns=['id'], inplace=True)
     #     perform_similarity_calculation(df, dataset['name'], dataset['columns'])
-    for dataset in ["x2_all", "x3_all"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
+    for dataset in ["baby_products_all"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
         try:
             if os.path.exists(f'/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/{dataset}/similarity_cosine.npy') or dataset in ["books4_all", "2MASS", "books4_numeric", "baby_products_all_VORSICHT_ID"]:#
                 print("Already done", dataset)
@@ -134,11 +138,15 @@ if __name__ == '__main__':
             textual_columns = EmbittoMatchingSolution.get_textual_columns(df, False)
             numerical_columns = EmbittoMatchingSolution.get_numeric_columns(df)
             numerical_df = df[numerical_columns] if len(numerical_columns) > 0 else None
-            textual_df = df[textual_columns] if len(textual_columns) > 0 else None
+            if textual_columns is not None:
+                textual_df = df[textual_columns] if len(textual_columns) > 0 else None
+                textual_df.drop(columns=['id'], inplace=True) if "id" in textual_df.columns else None
+            else:
+                textual_df = None
             numerical_df.drop(columns=['id'], inplace=True) if "id" in numerical_df.columns else None
-            textual_df.drop(columns=['id'], inplace=True) if "id" in textual_df.columns else None
             perform_similarity_calculation(numerical_df, textual_df, dataset)
         except Exception as e:
             print(e)
+            traceback.print_exc()
             print("Error with", dataset)
             continue

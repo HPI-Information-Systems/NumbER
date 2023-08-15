@@ -18,6 +18,7 @@ import wandb
 #, DeepMatcherMatchingSolution
 from NumbER.utils.experiment_config import experiment_configs, combinations
 from NumbER.matching_solutions.matching_solutions.evaluation.evaluator import Evaluator
+from NumbER.matching_solutions.utils.sampler.naive import NaiveSampler
 
 def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iteration=None):
 	print("TAG", tag)
@@ -38,6 +39,16 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 		times = []
 		print(torch.cuda.memory_summary(device=None, abbreviated=False))
 		for i in range(5):#5):
+			if dataset == "2MASS_small":
+				if i > 1:
+					break
+				if i > 0:
+					i = 3
+
+			if dataset == "baby_products_all":
+				if i > 0:
+					break
+				i = 3
 			#if iteration is not None:
 			#	i = int(iteration)
 			print("DOING it for ", dataset, " run ", i)
@@ -85,6 +96,8 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				paths['blocking']['config']['constant_based'] = True
 				sampler = paths['blocking']['sampler'](record_path, matches_path)
 				train_formatter, valid_formatter, test_formatter = sampler.create_format(matching_solution, paths['blocking']['config'])
+				naive_sampler = NaiveSampler(record_path, matches_path)
+				#train_formatter, _,_ = naive_sampler.create_format(matching_solution, paths['blocking']['config'])
 				print("train_FORMATTER", train_formatter)
 				pd.read_csv(record_path).replace({"\t", ""}, regex=True).to_csv(os.path.join(dataset_path, 'dataset.csv'), index=False)
 				(train_path, train_goldstandard_path), (valid_path, valid_goldstandard_path), (test_path, test_goldstandard_path) = train_formatter.write_to_file(os.path.join(dataset_path, f'train_{i}')), valid_formatter.write_to_file(os.path.join(dataset_path, f'valid_{i}')), test_formatter.write_to_file(os.path.join(dataset_path, f'test_{i}'))
@@ -138,9 +151,10 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				print(prediction['predict'][0])
 				print("goldstandard", test_formatter.goldstandard)
 				groundtruth = test_formatter.goldstandard.reset_index()
-				if "p1" not in prediction['predict'][0].columns:
-					prediction['predict'][0]['p1'] = groundtruth["p1"]
-					prediction['predict'][0]['p2'] = groundtruth["p2"]
+				#if "p1" not in prediction['predict'][0].columns:
+				prediction['predict'][0]['p1'] = groundtruth["p1"].values
+				prediction['predict'][0]['p2'] = groundtruth["p2"].values
+				print("predidction", prediction['predict'][0])
 				print(groundtruth)
 				#print(pred)
 				quality = Evaluator(prediction['predict'][0][['p1', 'p2', 'prediction', 'score']], groundtruth).evaluate()
@@ -165,16 +179,15 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				print("Got Quality", quality)
 				#pred.rename(columns={'match': 'prediction'},inplace=True, errors='raise')
 				wandb.finish()
-				continue
 				result_df = pd.DataFrame()
 				result_df['p1'] = test_formatter.goldstandard['p1']
 				result_df['p2'] = test_formatter.goldstandard['p2']
 				result_df['prediction'] = prediction['predict'][0]['prediction']
-				result_df['score'] = prediction['predict'][0]['score']
-				print("For debug 1", test_formatter.goldstandard)
-				print("For debug", result_df)
+				result_df['score'] = prediction['predict'][0]['score'] if 'score' in prediction['predict'][0].columns else None
+				print("result_df", result_df)
 				#pred = pd.merge(test_formatter.goldstandard.reset_index(), prediction['predict'][0].reset_index(), left_index=True, right_index=True)[['p1', 'p2', 'prediction_y', 'score']]
 				result_df.to_csv(os.path.join(matching_solution_path, dataset + "_" + str(i) + '.csv'), index=False)
+				continue
 				print("Wrote prediction", result_df)
 				test_formatter.goldstandard.to_csv(os.path.join(matching_solution_path, dataset + f'_goldstandard_{i}.csv'), index=False)
 				print(f"On dataset {dataset} with matching solution {matching_solution} in time {train_time} scored {prediction['evaluate']} in iteration {i}", file=sys.stdout)
@@ -214,12 +227,12 @@ if __name__ == '__main__':
 	parser.add_argument("--tag")
 	args = parser.parse_args()
 	try:
-		if args.matching_solution == "embitto":
+		if args.matching_solution == "embitto" and args.datasets != "fast":
 			for combination in combinations:
 				for finetune_formatter in combination["finetune_formatter"]:
 					for dataset, config in experiment_configs[args.datasets].items():
-						if "all" in dataset and combination["numerical_model"] is not None:
-							continue
+						# if "all" in dataset and combination["numerical_model"] is not None:
+						# 	continue
 						config = experiment_configs[args.datasets][dataset]["config"]["embitto"]["train"]
 						config["numerical_config"]["model"] = combination["numerical_model"]
 						config["textual_config"]["finetune_formatter"] = finetune_formatter

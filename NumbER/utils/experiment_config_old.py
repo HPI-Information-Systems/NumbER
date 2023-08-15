@@ -5,7 +5,7 @@ from NumbER.matching_solutions.embitto.numerical_components.dice import DICEEmbe
 from NumbER.matching_solutions.embitto.numerical_components.value_embeddings import ValueTransformerEmbeddings, ValueBaseEmbeddings
 from NumbER.matching_solutions.embitto.numerical_components.numeric_roberta import NumericRoberta
 from NumbER.matching_solutions.embitto.textual_components.base_roberta import BaseRoberta
-from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_ditto_formatter,textual_prompt_formatter, complete_prompt_formatter, ditto_formatter, numeric_prompt_formatter, pair_based_numeric_formatter, complete_prompt_formatter_min_max_scaled,complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific
+from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_ditto_formatter,textual_prompt_formatter, complete_prompt_formatter, ditto_formatter, numeric_prompt_formatter, pair_based_numeric_formatter, complete_prompt_formatter_min_max_scaled,complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific,text_sim_formatter, complete_prompt_formatter_min_max_scaled
 
 #from NumbER.matching_solutions.utils.sampler.jedai_based import JedaiBasedSampler
 collections = {
@@ -42,7 +42,7 @@ embitto_only_textual = {
 					"cluster": False
 				}
 			}
-finetune_formatters = [textual_prompt_formatter, pair_based_ditto_formatter, complete_prompt_formatter, complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific]
+finetune_formatters = [textual_prompt_formatter, pair_based_ditto_formatter, complete_prompt_formatter, complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific, text_sim_formatter, complete_prompt_formatter_min_max_scaled]
 combinations = [
 	{
 		"numerical_model": None,
@@ -89,14 +89,14 @@ combinations = [
 ]
 experiment_configs = {
 'fast': {
-	"earthquakes": {
+	"books3_all_no_isbn": {
 		"config": {
 			"embitto": {
 				"train": {
 					"numerical_config":
 						{
 							"embedding_size": 128,
-							"model": ValueBaseEmbeddings,
+							"model": None,
 							"pretrain_formatter": dummy_formatter,
        						"finetune_formatter": pair_based_numeric_formatter
 						},
@@ -104,15 +104,15 @@ experiment_configs = {
 						{
 							"model": BaseRoberta,
 							"max_length": 256,
-							"embedding_size": 128,
+							"embedding_size": 256,
 							"pretrain_formatter": ditto_formatter,
-							"finetune_formatter": complete_prompt_formatter_min_max_scaled
+							"finetune_formatter": text_sim_formatter#_min_max_scaled
 						},
-					"include_numerical_features_in_textual": False,
+					"include_numerical_features_in_textual": True,
 					"num_pretrain_epochs": 50,
 					"pretrain_batch_size": 100,
 					"finetune_batch_size": 50,
-					"num_finetune_epochs": 40,#30
+					"num_finetune_epochs": 1,#30
 					"output_embedding_size": 256,
 					"lr": 3e-5,
 					"should_pretrain": False,

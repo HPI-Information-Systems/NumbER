@@ -30,7 +30,7 @@ runs_df = pd.DataFrame({
     "tags": tag_list,
     "state": state_list
     })
-runs_df = runs_df[runs_df["tags"].apply(lambda x: "final" in x[0])]
+runs_df = runs_df[runs_df["tags"].apply(lambda x: "similar_sampling" in x[0])]
 runs_df = runs_df[runs_df["state"] == "finished"]
 for col in runs_df.columns:
     if col in ["summary", "config"]:

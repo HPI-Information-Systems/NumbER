@@ -1,6 +1,8 @@
 import time
 import pandas as pd
 import deepmatcher as dm
+import torch
+import random
 import numpy as np
 from pathlib import Path
 import pandas as pd
@@ -11,7 +13,15 @@ class DeepMatcherMatchingSolution(MatchingSolution):
     def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path):
         super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
         
-    def model_train(self, epochs, batch_size, pos_neg_ratio, i):
+    def model_train(self, epochs, batch_size, pos_neg_ratio, wandb_id, seed, i):
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
         assert str(Path(self.train_path).parent.absolute()) == str(Path(self.valid_path).parent.absolute()) == str(Path(self.test_path).parent.absolute())
         main_path = Path(self.train_path).parent.absolute()
         print("main", main_path)
@@ -60,10 +70,10 @@ class DeepMatcherMatchingSolution(MatchingSolution):
         precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 and true_positives > 0 else 0
         recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 and true_positives > 0 else 0
         f1 = 2 * (precision * recall) / (precision + recall) if precision > 0 and recall > 0 else 0
-        print("prediction", predictions)
         #result = pd.concat([predictions, goldstandard], axis=1)[['label', 'match_score']]
         #print("result", result)
         predictions.rename(columns={'label': 'prediction', 'match_score': 'score'}, inplace=True, errors='raise')
+        print("prediction", predictions)
         #result['p1'] = np.nan
         #result['p2'] = np.nan
         return {'predict': [predictions], 'evaluate': f1}

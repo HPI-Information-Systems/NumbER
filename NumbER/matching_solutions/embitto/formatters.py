@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 import re
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import cdist, pdist
 from sklearn.preprocessing import MinMaxScaler
+use_train_data = False
 number_pattern = re.compile(
     r"(\d+)\.?(\d*)")  # Matches numbers in decimal form.
 def ditto_formatter(data, scientific_notation=False):
@@ -85,13 +86,18 @@ def complete_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fa
     right_data.drop(columns=['id'], inplace=True) if "id" in left_data.columns else None
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
     numeric_cols = list(left_data.select_dtypes(include=numerics).columns)
+    numeric_cols = list(set(list(left_data.select_dtypes(include=numerics).columns)) & set(list(right_data.select_dtypes(include=numerics).columns)))
+    print("numeric_cols", numeric_cols)
     if min_max_scaled:
         for col in numeric_cols:
             scaler = MinMaxScaler()
-            print(train_data)
-            left_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
+            if use_train_data:
+                left_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
+            else:
+                left_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
             left_data[col] = left_scaler.transform(left_data[col].values.reshape(-1,1)).reshape(-1)
-            right_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
             right_data[col] = right_scaler.transform(right_data[col].values.reshape(-1,1)).reshape(-1)
     df = {}
     for col in left_data.columns:
@@ -104,6 +110,8 @@ def complete_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fa
         temp_right = ""
         for col, val in row.items():
             if col in numeric_cols:
+                print("COL", col)
+                print("VAL", val[0], val[1])
                 dist = abs(val[0] - val[1])
                 temp_left += f"COL {col} VAL {float(val[0])} DIST {float(dist)} "
                 temp_right += f"COL {col} VAL {float(val[1])} DIST {float(dist)} "
@@ -116,7 +124,7 @@ def complete_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fa
         data_right.append(temp_right)
     return list(zip(data_left, data_right))
 
-def textual_prompt_formatter(data):
+def textual_prompt_formatter(data, scientific_notation=False, min_max_scaled=False, train_data=None):
     columns = data.columns
     left_columns = filter(lambda x: x.startswith("left_"), columns)
     right_columns = filter(lambda x: x.startswith("right_"), columns)
@@ -128,7 +136,18 @@ def textual_prompt_formatter(data):
     left_data.drop(columns=['id'], inplace=True) if "id" in left_data.columns else None
     right_data.drop(columns=['id'], inplace=True) if "id" in left_data.columns else None
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    numeric_cols = list(left_data.select_dtypes(include=numerics).columns)
+    numeric_cols = list(set(list(left_data.select_dtypes(include=numerics).columns)) & set(list(right_data.select_dtypes(include=numerics).columns)))
+    if min_max_scaled:
+        for col in numeric_cols:
+            scaler = MinMaxScaler()
+            if use_train_data:
+                left_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
+            else:
+                left_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
+            left_data[col] = left_scaler.transform(left_data[col].values.reshape(-1,1)).reshape(-1)
+            right_data[col] = right_scaler.transform(right_data[col].values.reshape(-1,1)).reshape(-1)
     df = {}
     for col in left_data.columns:
         df[col] = list(zip(left_data[col].values, right_data[col].values))
@@ -141,6 +160,7 @@ def textual_prompt_formatter(data):
                 temp += f"COL {col} L_VAL {float(val[0])} R_VAL {float(val[1])} DIST {abs(float(val[0]) - float(val[1]))} "
             else:
                 temp += f"COL {col} L_VAL {val[0]} R_VAL {val[1]} "
+        temp = apply_scientific_notation(temp) if scientific_notation else temp
         data.append(temp)
     return data
     
@@ -151,11 +171,16 @@ def complete_prompt_formatter_scientific(data):
     return complete_prompt_formatter(data, scientific_notation=True)
 
 def complete_prompt_formatter_min_max_scaled(data, train_data):
-    print(train_data)
     return complete_prompt_formatter(data, min_max_scaled=True, train_data=train_data)
 
 def pair_based_ditto_formatter_scientific(data):
     return pair_based_ditto_formatter(data, scientific_notation=True)
+
+def textual_scientific(data):
+    return textual_prompt_formatter(data, scientific_notation=True)
+
+def textual_min_max_scaled(data, train_data):
+    return textual_prompt_formatter(data, min_max_scaled=True, train_data=train_data)
 
 def text_sim_formatter(data, train_data):
     columns = data.columns
@@ -169,10 +194,15 @@ def text_sim_formatter(data, train_data):
     left_data.drop(columns=['id'], inplace=True) if "id" in left_data.columns else None
     right_data.drop(columns=['id'], inplace=True) if "id" in left_data.columns else None
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
-    numeric_cols = list(left_data.select_dtypes(include=numerics).columns)
+    #numeric_cols = list(left_data.select_dtypes(include=numerics).columns)
+    numeric_cols = list(set(list(left_data.select_dtypes(include=numerics).columns)) & set(list(right_data.select_dtypes(include=numerics).columns)))
     dists = {}
     for col in numeric_cols:
-        dist = pdist(train_data[col].values, 'euclidean')
+        #dist = cdist(train_data[col].values, 'euclidean')
+        if use_train_data:
+            dist = pdist(train_data[col].values.reshape(-1,1), 'euclidean')
+        else:
+            dist = pdist(left_data[col].values.reshape(-1,1), 'euclidean')
         very_high_dist = np.quantile(dist, 0.95)
         high_dist = np.quantile(dist, 0.75)
         very_low_dist = np.quantile(dist, 0.05)
@@ -203,8 +233,11 @@ def text_sim_formatter(data, train_data):
                     dist = "high"
                 elif dist <= dists[col]['very_high_dist']:
                     dist = "very high"
-                temp_left += f"COL {col} VAL {float(val[0])} DIST {dist} "
-                temp_right += f"COL {col} VAL {float(val[1])} DIST {dist} "
+                else:
+                    dist = "ultra high"
+                
+                temp_left += f"COL {col} VAL {float(val[0])} DISTANCE {dist} "
+                temp_right += f"COL {col} VAL {float(val[1])} DISTANCE {dist} "
             else:
                 temp_left += f"COL {col} VAL {val[0]} "
                 temp_right += f"COL {col} VAL {val[1]} "
