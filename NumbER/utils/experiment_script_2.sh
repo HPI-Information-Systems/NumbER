@@ -8,8 +8,6 @@ function run_experiment {
 	echo Tagging with $2
 	conda activate $1
 	python3 NumbER/utils/experiment_script.py --matching-solution $1 --tag $2 --datasets "numeric_1" --wandb #> output_2.out
-	python3 NumbER/scripts/load_data.py --tags $2
-	python3 NumbER/scripts/
 }
 
 set -e

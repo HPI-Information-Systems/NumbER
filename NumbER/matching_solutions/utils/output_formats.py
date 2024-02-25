@@ -153,6 +153,7 @@ class DummyFormat(OutputFormat):
                 'ditto': DittoFormat,
                 'deep_matcher': DeepMatcherFormat,
                 'embitto': EmbittoFormat,
+                'lightgbm': DeepMatcherFormat,
             }
             return mapping[self.output_format](self.goldstandard, self.records).write_to_file(os.path.join(pathlib.Path(filepath).parent, pathlib.Path(filepath).stem))
         

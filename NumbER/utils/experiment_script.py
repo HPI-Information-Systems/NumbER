@@ -74,6 +74,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				elif matching_solution == "embitto":
 					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.embitto")
 					algorithm = getattr(module, 'EmbittoMatchingSolution')
+				elif matching_solution == "lightgbm":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.lightgbm")
+					algorithm = getattr(module, "LightGBMMatchingSolution")
 				else:
 					module = None
 				dataset_path = os.path.join(base_output_path, 'datasets', dataset)

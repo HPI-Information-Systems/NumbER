@@ -425,8 +425,75 @@ sets = {
     },
 
 'numeric_1': {
-    "baby_products_numeric": {
+ "books3_numeric": {
 		"config": {
+			"embitto": embitto_only_textual,
+            "lightgbm": {
+                "train": {
+					"epochs": 10,
+                    "params": {'num_leaves': 31, 'objective': 'binary', "metric": "auc"},
+				},
+				"test": {
+                    
+				}
+			},
+			"ditto": {
+				"train": {
+					"batch_size": 50,
+					"n_epochs": 40,
+					"lr": 3e-5,
+					"max_len": 256,
+					"lm": "roberta",
+					"fp16": "True",
+				},
+				"test": {
+					"batch_size": 32,
+					"lm": "roberta",
+					"max_len": 256,
+				}
+			},
+   			"ditto": {
+				"train": {
+					"batch_size": 50,
+					"n_epochs": 40,
+					"lr": 3e-5,
+					"max_len": 256,
+					"lm": "roberta",
+					"fp16": True,
+				},
+				"test": {
+					"batch_size": 32,
+					"lm": "roberta",
+					"max_len": 256,
+				}
+			},
+		"deep_matcher": {
+			"train": {
+				'epochs': 40,
+    			'batch_size': 50,
+    			'pos_neg_ratio':3
+			},
+			"test": {
+			}
+		}},'blocking':{
+      		'sampler': SimilarityBasedSampler,
+			'distance_path': 'similarity.npy',
+			'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
+			'train_window_size': 25,
+			'test_window_size': 10,
+      	'attributes': ["depth", "mag_value"]}},
+	},     
+	"baby_products_numeric": {
+		"config": {
+            "lightgbm": {
+                "train": {
+					"epochs": 50,
+                    "params": {'num_leaves': 31, 'objective': 'binary', "metric": "auc"},
+				},
+				"test": {
+                    
+				}
+			},
 			"embitto": embitto_only_textual,
 			"ditto": {
 				"train": {
@@ -474,55 +541,7 @@ sets = {
 			'test_window_size': 10,
       	'attributes': ["depth", "mag_value"]}},
 	},  
-    "books3_numeric": {
-		"config": {
-			"embitto": embitto_only_textual,
-			"ditto": {
-				"train": {
-					"batch_size": 50,
-					"n_epochs": 40,
-					"lr": 3e-5,
-					"max_len": 256,
-					"lm": "roberta",
-					"fp16": "True",
-				},
-				"test": {
-					"batch_size": 32,
-					"lm": "roberta",
-					"max_len": 256,
-				}
-			},
-   			"ditto": {
-				"train": {
-					"batch_size": 50,
-					"n_epochs": 40,
-					"lr": 3e-5,
-					"max_len": 256,
-					"lm": "roberta",
-					"fp16": True,
-				},
-				"test": {
-					"batch_size": 32,
-					"lm": "roberta",
-					"max_len": 256,
-				}
-			},
-		"deep_matcher": {
-			"train": {
-				'epochs': 40,
-    			'batch_size': 50,
-    			'pos_neg_ratio':3
-			},
-			"test": {
-			}
-		}},'blocking':{
-      		'sampler': SimilarityBasedSampler,
-			'distance_path': 'similarity.npy',
-			'config': {'n_most_similar':3, 'train_fraction': 0.5, 'valid_fraction': 0.25, 'test_fraction': 0.25,
-			'train_window_size': 25,
-			'test_window_size': 10,
-      	'attributes': ["depth", "mag_value"]}},
-	},  
+    
     "x3_numeric": {
 		"config": {
 			"embitto": embitto_only_textual,
@@ -1788,6 +1807,15 @@ sets = {
 	 "2MASS_small_no_n": {
 		"config": {
 			"embitto": embitto_only_textual,
+            "lightgbm": {
+                "train": {
+					"epochs": 50,
+                    "params": {'num_leaves': 31, 'objective': 'binary', "metric": "auc"},
+				},
+				"test": {
+                    
+				}
+			},
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1993,6 +2021,15 @@ sets = {
 	 "earthquakes": {
 		"config": {
 			"embitto": embitto_only_textual,
+            "lightgbm": {
+                "train": {
+					"epochs": 50,
+                    "params": {'num_leaves': 31, 'objective': 'binary', "metric": "auc"},
+				},
+				"test": {
+                    
+				}
+			},
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -2430,7 +2467,7 @@ sets = {
 experiment_configs = {
 	'fast': sets['fast'],
 	'numerical_datasets': sets['numerical_datasets'],
-	'numeric_1': {**sets['numeric_1'], **sets['earthquakes'], **sets['2MASS_small']},
+	'numeric_1': {**sets['2MASS_small'], **sets['earthquakes'], **sets['numeric_1']},
 	'numeric_2': {**sets['numeric_2'], **sets['vsx_small'], **sets['protein_small']},
 	'numeric_3': sets['numeric_3'],
 	'numeric_4': sets['numeric_4'],
