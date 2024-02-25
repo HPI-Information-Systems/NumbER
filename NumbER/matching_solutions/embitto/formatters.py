@@ -96,7 +96,7 @@ def complete_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fa
                 right_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
             else:
                 left_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
-                right_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(right_data[col].values.reshape(-1,1))
             left_data[col] = left_scaler.transform(left_data[col].values.reshape(-1,1)).reshape(-1)
             right_data[col] = right_scaler.transform(right_data[col].values.reshape(-1,1)).reshape(-1)
     df = {}
@@ -110,8 +110,6 @@ def complete_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fa
         temp_right = ""
         for col, val in row.items():
             if col in numeric_cols:
-                print("COL", col)
-                print("VAL", val[0], val[1])
                 dist = abs(val[0] - val[1])
                 temp_left += f"COL {col} VAL {float(val[0])} DIST {float(dist)} "
                 temp_right += f"COL {col} VAL {float(val[1])} DIST {float(dist)} "
@@ -145,7 +143,7 @@ def textual_prompt_formatter(data, scientific_notation=False, min_max_scaled=Fal
                 right_scaler = scaler.fit(train_data[col].values.reshape(-1,1))
             else:
                 left_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
-                right_scaler = scaler.fit(left_data[col].values.reshape(-1,1))
+                right_scaler = scaler.fit(right_data[col].values.reshape(-1,1))
             left_data[col] = left_scaler.transform(left_data[col].values.reshape(-1,1)).reshape(-1)
             right_data[col] = right_scaler.transform(right_data[col].values.reshape(-1,1)).reshape(-1)
     df = {}
@@ -179,10 +177,13 @@ def pair_based_ditto_formatter_scientific(data):
 def textual_scientific(data):
     return textual_prompt_formatter(data, scientific_notation=True)
 
+def num_text_sim_formatter(data, train_data):
+    return text_sim_formatter(data, train_data, True)
+
 def textual_min_max_scaled(data, train_data):
     return textual_prompt_formatter(data, min_max_scaled=True, train_data=train_data)
 
-def text_sim_formatter(data, train_data):
+def text_sim_formatter(data, train_data, include_numerical_distance=False):
     columns = data.columns
     left_columns = filter(lambda x: x.startswith("left_"), columns)
     right_columns = filter(lambda x: x.startswith("right_"), columns)
@@ -224,20 +225,24 @@ def text_sim_formatter(data, train_data):
         temp_right = ""
         for col, val in row.items():
             if col in numeric_cols:
-                dist = abs(val[0] - val[1])
-                if dist <= dists[col]['very_low_dist']:
+                num_dist = abs(val[0] - val[1])
+                dist = ""
+                if num_dist <= dists[col]['very_low_dist']:
                     dist = "very low"
-                elif dist <= dists[col]['low_dist']:
+                elif num_dist <= dists[col]['low_dist']:
                     dist = "low"
-                elif dist <= dists[col]['high_dist']:
+                elif num_dist <= dists[col]['high_dist']:
                     dist = "high"
-                elif dist <= dists[col]['very_high_dist']:
+                elif num_dist <= dists[col]['very_high_dist']:
                     dist = "very high"
                 else:
                     dist = "ultra high"
                 
                 temp_left += f"COL {col} VAL {float(val[0])} DISTANCE {dist} "
                 temp_right += f"COL {col} VAL {float(val[1])} DISTANCE {dist} "
+                if include_numerical_distance:
+                    temp_left += f"EUCLIDEAN_DIST {num_dist} "
+                    temp_right += f"EUCLIDEAN_DIST {num_dist} "
             else:
                 temp_left += f"COL {col} VAL {val[0]} "
                 temp_right += f"COL {col} VAL {val[1]} "

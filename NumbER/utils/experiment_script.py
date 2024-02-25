@@ -36,27 +36,17 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 		experiment_config = {dataset: experiment_config[dataset]}
 	for dataset, paths in experiment_config.items():
 		results_f1 = []
+		# torch.cuda.init()
+		# print(torch.cuda.memory_summary(device=None, abbreviated=False))
 		times = []
-		print(torch.cuda.memory_summary(device=None, abbreviated=False))
 		for i in range(5):#5):
-			if dataset == "2MASS_small":
-				if i > 1:
-					break
-				if i > 0:
-					i = 3
-
-			if dataset == "baby_products_all":
-				if i > 0:
-					break
-				i = 3
-			#if iteration is not None:
-			#	i = int(iteration)
 			print("DOING it for ", dataset, " run ", i)
 			wandb.init(
 				project="NumbER",
     			entity="Lasklu",
        			mode="online" if use_wandb else "disabled",
           		tags=[tag],
+				dir="/hpi/fs00/share/fg-naumann/lukas.laskowski/wandb",
 				config={
 					**paths['config'][matching_solution]["train"],
 					'dataset': dataset,
@@ -126,8 +116,8 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 					config['train']['seed'] = 1
 					training_time = time.time()
 					print("Config", config['train'])
+					#raise Exception("Not implemented")
 					best_f1, model, threshold, train_time = solution.model_train(**config['train'])
-					#raise Exception("Test")
 					wandb.log({'training_time': training_time - time.time()})
 					print(f"Predicting... Best f1 achieved: {best_f1}", file=sys.stdout)
 					if threshold is not None:
@@ -135,14 +125,15 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 						config['test']['threshold'] = threshold
 					else:
 						print("No threshold set")
-					#prediction_time = time.time()
 					print("Config", config['test'])
 					prediction = solution.model_predict(**config['test'], model=model)
-					#wandb.log({'prediction_time': prediction_time - time.time()})
 					print("Predicted", prediction)
 				except Exception as e:
 					print(traceback.format_exc(), file=sys.stdout)
 					print(f"An error occured in train/predict: {e}", file=sys.stdout)
+					path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/saved_models"
+					if os.path.exists(f"{path}/best_model_correct_{wandb.run.id}.ckpt"):
+						os.remove(f"{path}/best_model_correct_{wandb.run.id}.ckpt")
 					wandb.finish(1)
 					continue
 				matching_solution_path = os.path.join(base_output_path, 'matching_solution', matching_solution)

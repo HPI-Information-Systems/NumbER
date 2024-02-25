@@ -1,0 +1,3 @@
+# packages in environment at /hpi/fs00/home/lukas.laskowski/conda3/envs/deep_matcher:
+#
+# Name                    Version                   Build  Channel

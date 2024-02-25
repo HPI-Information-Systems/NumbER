@@ -41,10 +41,12 @@ class SimilarityBasedSampler(BaseSampler):
         #return pd.concat(indices)
     def get_match_status(self,record_id_1, record_id_2):
         pair = self.goldstandard.loc[((self.goldstandard['p1'] == record_id_1) & (self.goldstandard['p2'] == record_id_2)) | ((self.goldstandard['p1'] == record_id_2) & (self.goldstandard['p2'] == record_id_1))]
+        #return 1 if len(pair) > 0 else 0
         if len(pair) > 0:
             return 1
         else:
             return 0
+        
     def sample(self, *args):
         config = args[0]
         print("config", config)
@@ -52,13 +54,30 @@ class SimilarityBasedSampler(BaseSampler):
         naive_sampler = NaiveSampler(self.records_path, self.goldstandard_path)
         print("LOading naive sampler with paths", self.records_path, self.goldstandard_path)
         train_records, valid_records, test_records, train_matches, valid_matches, test_matches = naive_sampler.sample_records(config)
+        # path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/books3_merged_no_isbn"
+        # print("ITERATION", config["iteration"])
+        # train_matches = pd.read_csv(f"{path}/samples/similarity/train_{config['iteration']}_goldstandard.csv")
+        # test_matches = pd.read_csv(f"{path}/samples/similarity/test_{config['iteration']}_goldstandard.csv")
+        # valid_matches = pd.read_csv(f"{path}/samples/similarity/valid_{config['iteration']}_goldstandard.csv")
+        # train_matches = train_matches[train_matches['prediction'] == 1]
+        # test_matches = test_matches[test_matches['prediction'] == 1]
+        # valid_matches = valid_matches[valid_matches['prediction'] == 1]
+        # train_records = pd.read_csv(f"{path}/features.csv")
+        # train_records = train_records[train_records['id'].isin(train_matches['p1'].values) | train_records['id'].isin(train_matches['p2'].values)]
+        # test_records = pd.read_csv(f"{path}/features.csv")
+        # test_records = test_records[test_records['id'].isin(test_matches['p1'].values) | test_records['id'].isin(test_matches['p2'].values)]
+        # valid_records = pd.read_csv(f"{path}/features.csv")
+        # valid_records = valid_records[valid_records['id'].isin(valid_matches['p1'].values) | valid_records['id'].isin(valid_matches['p2'].values)]
         print("Sampled records naiveley", train_records, valid_records, test_records, train_matches, valid_matches, test_matches)
         self.check_no_leakage(train_matches, valid_matches, test_matches)
         print(len(train_records), len(valid_records), len(test_records), len(train_matches), len(valid_matches), len(test_matches))
         result = []
-        train_matches.drop(['index'], axis=1, inplace=True)
-        valid_matches.drop(['index'], axis=1, inplace=True)
-        test_matches.drop(['index'], axis=1, inplace=True)
+        if 'index' in train_records.columns:
+            train_matches.drop(['index'], axis=1, inplace=True)
+        if 'index' in valid_records.columns:
+            valid_matches.drop(['index'], axis=1, inplace=True)
+        if 'index' in test_records.columns:
+            test_matches.drop(['index'], axis=1, inplace=True)
         for records, matches in [[train_records, train_matches], [valid_records, valid_matches], [test_records, test_matches]]:
             clusterings = []
             for _,record in tqdm(records.iterrows()):

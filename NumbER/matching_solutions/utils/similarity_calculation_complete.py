@@ -1,5 +1,5 @@
 from sklearn.preprocessing import MinMaxScaler
-from scipy.spatial.distance import pdist, euclidean, cosine
+from scipy.spatial.distance import pdist, euclidean
 import pandas as pd
 import numpy as np
 import os
@@ -7,9 +7,7 @@ import traceback
 import time
 from numba import jit
 from NumbER.matching_solutions.matching_solutions.embitto import EmbittoMatchingSolution
-#from NumbER.matching_solutions.utils.calculate_cosine import cosine
 import re
-import scipy
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
@@ -20,8 +18,9 @@ def ngrams(string, n=3):
 
 def perform_similarity_calculation(numerical_df, textual_df, filename):
     print(f"Start similarity calculation for {filename}")
-    numerical_df.dropna(axis=1, how='all', inplace=True)
-    numerical_df = normalization(numerical_df) if len(numerical_df.columns) > 0 else None
+    if numerical_df is not None:
+        numerical_df.dropna(axis=1, how='all', inplace=True)
+        numerical_df = normalization(numerical_df) if len(numerical_df.columns) > 0 else None
     calculate_similarity_matrix(numerical_df, textual_df, filename)
 
 def normalization(df):
@@ -30,6 +29,7 @@ def normalization(df):
     df = scaler.fit_transform(df)
     print("Normalization done")
     return df
+
 @jit(nopython=True)
 def cosine_similarity_numba(u:np.ndarray, v:np.ndarray):
     assert(u.shape[0] == v.shape[0])
@@ -44,6 +44,7 @@ def cosine_similarity_numba(u:np.ndarray, v:np.ndarray):
     if uu!=0 and vv!=0:
         cos_theta = uv/np.sqrt(uu*vv)
     return cos_theta
+
 @jit#(nopython=True)
 def numerical_similarity_func(u, v):
     u_mask = ~np.isnan(u)
@@ -53,17 +54,8 @@ def numerical_similarity_func(u, v):
     u = u[v_mask]
     v = v[v_mask]
     return cosine_similarity_numba(u, v)
-    return 1 - np.dot(u, v)/(np.linalg.norm(u)*np.linalg.norm(v))
-    return 1/(1+euclidean(u,v))
-
-def textual_similarity_func(u, v):
-    u_mask = ~np.isnan(u)
-    u = u[u_mask]
-    v = v[u_mask]
-    v_mask = ~np.isnan(v)
-    u = u[v_mask]
-    v = v[v_mask]
-    return 
+    # return 1 - np.dot(u, v)/(np.linalg.norm(u)*np.linalg.norm(v))
+    # return 1/(1+euclidean(u,v))
 
 
 def calculate_similarity_matrix(numerical_df, textual_df, filename):
@@ -71,11 +63,9 @@ def calculate_similarity_matrix(numerical_df, textual_df, filename):
     if textual_df is not None:
         textual_df.dropna(axis=1, how='all', inplace=True)
         similarities = []
-        #numerical_df = numerical_df.to_numpy().astype(np.float)
         for col in textual_df.columns:
             vectorizer = TfidfVectorizer(min_df=1, analyzer=ngrams)
             print(textual_df[col].values.astype('U'))
-            print("Col", col)
             if col == "n_max":
                 continue
             values = vectorizer.fit_transform(textual_df[col].values.astype('U')).toarray()
@@ -119,34 +109,25 @@ if __name__ == '__main__':
 		# {'name': 'x2_numeric', 'columns': ["weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]},
 		# {'name': 'x3_numeric', 'columns': ["weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]},
 	]
-    # for dataset in config:
-    #     print(dataset['name'])
-    #     df = pd.read_csv(f'{base_path}{dataset["name"]}/features.csv')
-    #     textual_columns = EmbittoMatchingSolution.get_textual_columns(df, False)
-    #     numerical_columns = EmbittoMatchingSolution.get_numeric_columns(df)
-    #     numerical_df = df[numerical_columns]
-    #     textual_df = df[textual_columns]
-    #     numerical_df.drop(columns=['id'], inplace=True)
-    #     perform_similarity_calculation(df, dataset['name'], dataset['columns'])
-    for dataset in ["baby_products_all"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
+    for dataset in ["x3_all"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
         try:
             if os.path.exists(f'/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/{dataset}/similarity_cosine.npy') or dataset in ["books4_all", "2MASS", "books4_numeric", "baby_products_all_VORSICHT_ID"]:#
                 print("Already done", dataset)
                 continue
             print("Start with", dataset)
             df = pd.read_csv(f'/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/{dataset}/features.csv')
+            # This just returns an array with the names of the textual and numerical columns
             textual_columns = EmbittoMatchingSolution.get_textual_columns(df, False)
             numerical_columns = EmbittoMatchingSolution.get_numeric_columns(df)
-            numerical_df = df[numerical_columns] if len(numerical_columns) > 0 else None
+            numerical_df = df[numerical_columns] if numerical_columns is not None and len(numerical_columns) > 0 else None
             if textual_columns is not None:
                 textual_df = df[textual_columns] if len(textual_columns) > 0 else None
                 textual_df.drop(columns=['id'], inplace=True) if "id" in textual_df.columns else None
             else:
                 textual_df = None
-            numerical_df.drop(columns=['id'], inplace=True) if "id" in numerical_df.columns else None
+            numerical_df.drop(columns=['id'], inplace=True) if numerical_df is not None and "id" in numerical_df.columns else None
             perform_similarity_calculation(numerical_df, textual_df, dataset)
         except Exception as e:
             print(e)
-            traceback.print_exc()
             print("Error with", dataset)
             continue

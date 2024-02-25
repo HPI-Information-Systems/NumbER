@@ -61,8 +61,11 @@ class EmbittoMatchingSolution(MatchingSolution):
 		self.valid_data = self.process_dataframe(valid_record_data, valid_goldstandard_data, textual_pretrain_formatter, numerical_pretrain_formatter,include_numerical_features_in_textual, stage=Stage.PRETRAIN)
 		self.valid_data["numerical_data"] = self.valid_data["numerical_data"][numeric_order] if self.valid_data["numerical_data"] is not None else None
 		self.test_data = self.process_dataframe(test_record_data, test_goldstandard_data, textual_pretrain_formatter, numerical_pretrain_formatter,include_numerical_features_in_textual, stage=Stage.PRETRAIN)
-		self.test_data["numerical_data"] = self.test_data["numerical_data"][numeric_order] if self.test_data["numerical_data"] is not None else None
-		if numerical_config['model'] is not None:
+		if numeric_order is not None:
+			self.test_data["numerical_data"] = self.test_data["numerical_data"][numeric_order] if self.test_data["numerical_data"] is not None else None
+		else:
+			self.test_data["numerical_data"] = None
+		if numerical_config['model'] is not None and self.train_data["numerical_data"] is not None:
 			numerical_component = numerical_config['model'](self.train_data["numerical_data"], self.valid_data["numerical_data"], self.test_data["numerical_data"], numerical_config['embedding_size'], should_pretrain=should_pretrain)
 			fusion_component = EmbeddimgFusion(
 				embedding_combinator=ConcatenationAggregator,
@@ -108,7 +111,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 						monitor="val_loss",
 						mode="min",
 						save_top_k=1,
-						dirpath="saved_models/",
+						dirpath="/hpi/fs00/share/fg-naumann/lukas.laskowski/saved_models/",
 						filename=f"best_model_correct_{wandb_id}",
 					)
 			trainer = pl.Trainer(accelerator="gpu",precision="16-mixed", devices=1, logger=WandbLogger(), max_epochs=num_finetune_epochs,callbacks=[checkpoint_callback_1])#,logger=logger, callbacks=[EarlyStopping(monitor='val_loss', patience=3, mode='min')])
@@ -151,7 +154,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 			pairs['score'] = test_predictions
 			pairs["prediction"] = [1 if p > best_th else 0 for p in test_predictions]
 		print("Wandb id: ", wandb.run.id)
-		path = "/hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER/saved_models"
+		path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/saved_models"
 		if os.path.exists(f"{path}/best_model_correct_{wandb.run.id}.ckpt"):
 			os.remove(f"{path}/best_model_correct_{wandb.run.id}.ckpt")
 		return {'predict': [pairs], 'evaluate': None}
@@ -200,7 +203,7 @@ class EmbittoMatchingSolution(MatchingSolution):
 		if stage == Stage.FINETUNING:
 			textual_data = self.build_pairs(textual_data, matches) if textual_data is not None else None
 			numerical_data = self.build_pairs(numerical_data, matches) if numerical_data is not None else None
-		if textual_formatter.__name__ in ["complete_prompt_formatter", "complete_prompt_formatter_min_max_scaled", "text_sim_formatter", "textual_min_max_scaled"]:
+		if textual_formatter.__name__ in ["complete_prompt_formatter", "complete_prompt_formatter_min_max_scaled", "text_sim_formatter", "textual_min_max_scaled", "num_text_sim_formatter"]:
 			textual_data = textual_formatter(data=textual_data, train_data=train_data) if textual_data is not None else None
 		else:
 			textual_data = textual_formatter(textual_data) if textual_data is not None else None

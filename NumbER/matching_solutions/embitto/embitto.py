@@ -25,7 +25,7 @@ class Embitto(pl.LightningModule):
             output_size = numerical_component.get_outputshape()
         else:
             output_size = textual_component.get_outputshape()
-        self.finetuning_step = nn.Linear(output_size, 2)
+        self.finetuning_step = nn.Linear(output_size, 2)#!output_size
         self.softmax = nn.Softmax(dim=1)
         self.dropout = nn.Dropout(p=0.2)
         self.criterion = nn.CosineEmbeddingLoss(margin=0.5) if self.stage == Stage.PRETRAIN else nn.CrossEntropyLoss()

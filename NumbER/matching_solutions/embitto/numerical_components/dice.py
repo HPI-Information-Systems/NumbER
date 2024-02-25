@@ -93,10 +93,10 @@ class DICEEmbeddingAggregator(BaseNumericComponent):
     def prepare_dice_embeddings(self, data: pd.DataFrame):
         dice_config = []
         for column in data.columns:
-            lower_bound = data[column].quantile(.2)
-            upper_bound = data[column].quantile(.8)
+            lower_bound = data[column].quantile(.01)
+            upper_bound = data[column].quantile(.99)
             dice_config.append({
-				'embedding_dim': 10,
+				'embedding_dim': 20,
 				'lower_bound': lower_bound,
 				'upper_bound': upper_bound
 			})

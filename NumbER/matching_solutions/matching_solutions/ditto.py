@@ -9,8 +9,7 @@ sys.path.insert(0, "Snippext_public")
 
 from NumbER.matching_solutions.matching_solutions.matching_solution import MatchingSolution
 from NumbER.matching_solutions.ditto.ditto_light.dataset import DittoDataset
-from NumbER.matching_solutions.ditto.ditto_light.summarize import Summarizer
-from NumbER.matching_solutions.ditto.ditto_light.knowledge import *
+#from NumbER.matching_solutions.ditto.ditto_light.knowledge import *
 from NumbER.matching_solutions.ditto.ditto_light.ditto import train, evaluate
 from NumbER.matching_solutions.ditto.matcher import predict
 

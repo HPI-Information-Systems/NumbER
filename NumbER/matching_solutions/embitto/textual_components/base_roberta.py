@@ -29,8 +29,8 @@ class BaseRoberta(nn.Module):
         outputs = self.roberta(
             input_sequence
         )
-        print("shape", np.shape(outputs[0][:, 0, :]))
-        return outputs[0][:, 0, :]
+        #print("shape", np.shape(outputs[0][:, 0, :]))
+        #return outputs[0][:, 0, :]
         embeddings = self.embeddings(outputs[0][:, 0, :])
         return embeddings
         #return pooled_output

@@ -21,7 +21,7 @@ filter= {
 	#'fp16': True,
 	#'max_len': 256,
 	'numerical_config_model': None,
-	'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.value_embeddings.ValueBaseEmbeddings",
+	#'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.value_embeddings.ValueBaseEmbeddings",
 	#'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.dice.DICEEmbeddingAggregator",
  #'numerical_config_embedding_size': 128,
 	# 'numerical_config_finetune_formatter': 'NumbER.matching_solutions.embitto.formatters.pair_based_numeric_formatter',
@@ -29,7 +29,7 @@ filter= {
 	# 'numerical_config_0': None,
 	'textual_config_model': 'NumbER.matching_solutions.embitto.textual_components.base_roberta.BaseRoberta',
 	'textual_config_max_length': 256,
-	'textual_config_embedding_size': 128,
+	'textual_config_embedding_size': 256,
 	'textual_config_finetune_formatter': 'NumbER.matching_solutions.embitto.formatters.textual_prompt_formatter',#_scientific',
 	#'textual_config_pretrain_formatter': ??,
 	'textual_config_0': None, 
@@ -51,11 +51,6 @@ filtered_df = filtered_df.drop_duplicates(subset=['tags', 'dataset', 'run'])
 filtered_df = filtered_df[~filtered_df["run"].isnull()]
 filtered_df = filtered_df[filtered_df["dataset"].isin(["x2_all", "x2_combined", "x3_all", "x3_combined", "books3_all", "books3_combined", "books3_all_no_isbn", "books3_combined_no_isbn"])]
 
-#filtered_df = filtered_df["similar_sampling" in filtered_df["tags"]]
-#print(len(filtered_df))
-# filtered_df = filtered_df[filtered_df["dataset"]== "books3_numeric"]
-# filtered_df = filtered_df[filtered_df["tags"] == "final_numeric_sorted"]
-#print(filtered_df[["i", "f1_not_closed", "training_time"]])
 aggregate = filtered_df.groupby(["dataset", "tags", "state"]).agg({"f1_not_closed": ["mean", "var", "count"], "recall_not_closed": ["mean"], "training_time": ["mean", "std"]})
 #print(aggregate)
 aggregate = aggregate[aggregate["f1_not_closed"]["count"] > 4]
@@ -95,13 +90,3 @@ for attribute, measurement in data.items():
     rects = ax.bar(x + offset, measurement, width, label=attribute)
     ax.bar_label(rects, padding=3)
     multiplier += 1
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax.set_ylabel('F1-Score')
-ax.set_title('base_embeddings')
-ax.set_xticks(x + width, species)
-ax.legend(loc='upper left', ncols=3)
-ax.set_ylim(0.6, 1.2)
-
-plt.show()
-plt.savefig("penguins.png")

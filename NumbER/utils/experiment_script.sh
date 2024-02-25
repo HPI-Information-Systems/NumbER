@@ -10,7 +10,7 @@ function run_experiment {
 	conda activate $1
 	#python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "numeric"  --tag $2 --iteration $3 --wandb #> output.out
 	#python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "earthquakes"  --tag $2 --wandb #> output.out
-	python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "numeric_1"  --tag $2 --wandb #> output.out
+	python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "all_1"  --tag $2 --wandb #> output.out
 }
 set -e
 eval "$(conda shell.bash hook)"
@@ -19,7 +19,7 @@ cd /hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER
 #run_experiment "deep_matcher" $1
 #run_experiment "ditto" $1
 run_experiment "embitto" $1
-# run_experiment "ditto" $1
+run_experiment "ditto" $1
 #run_experiment "deep_matcher" $1
 #run_experiment "ditto" $1
 # for i in {0..4}; do
