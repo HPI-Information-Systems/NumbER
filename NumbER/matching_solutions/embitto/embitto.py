@@ -88,8 +88,8 @@ class Embitto(pl.LightningModule):
         # if np.isnan(loss.cpu().detach().item()):
         #     print("Predictions", predictions)
             #print("Batch", batch)
-        self.log("train_loss", loss)
-        print("train_loss", loss)
+        #self.log("train_loss", loss)
+        #print("train_loss", loss)
         #wandb.log({"train_loss": loss})
         return loss
     

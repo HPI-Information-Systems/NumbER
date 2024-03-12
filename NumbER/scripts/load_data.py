@@ -7,7 +7,8 @@ from tqdm import tqdm
 ap = argparse.ArgumentParser()
 ap.add_argument("-t", "--tags", required=True, nargs='+', help="Tags of experiments to be loaded")
 args = vars(ap.parse_args())
-tags = args.tags
+print(args)
+tags = args["tags"]
 
 api = wandb.Api()
 # Project is specified by <entity/project-name>
@@ -46,8 +47,9 @@ for tag in tags:#, "similar_sampling"]:
             #convert dictionary to columns in dataframe
             runs_df = pd.concat([runs_df.drop([col], axis=1), runs_df[col].apply(pd.Series)], axis=1)
             #convert numerical_config column to real columns in dataframe but add numeric_config prefix
-    runs_df = pd.concat([runs_df.drop(["numerical_config"], axis=1), runs_df["numerical_config"].apply(pd.Series).add_prefix("numerical_config_")], axis=1)#!
-    runs_df = pd.concat([runs_df.drop(["textual_config"], axis=1), runs_df["textual_config"].apply(pd.Series).add_prefix("textual_config_")], axis=1)#!
+    if "numerical_config" in runs_df.columns:
+        runs_df = pd.concat([runs_df.drop(["numerical_config"], axis=1), runs_df["numerical_config"].apply(pd.Series).add_prefix("numerical_config_")], axis=1)#!
+        runs_df = pd.concat([runs_df.drop(["textual_config"], axis=1), runs_df["textual_config"].apply(pd.Series).add_prefix("textual_config_")], axis=1)#!
     runs_df["tags"] = runs_df["tags"].apply(lambda x: x[0])
     #print(runs_df)
     runs_df.to_csv(f"./NumbER/scripts/runs_{tag}.csv")

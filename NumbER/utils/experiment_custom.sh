@@ -10,7 +10,8 @@ function run_experiment {
 	conda activate $1
 	#python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "numeric"  --tag $2 --iteration $3 --wandb #> output.out
 	#python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "earthquakes"  --tag $2 --wandb #> output.out
-	python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "x3_all"  --tag $2 --wandb #> output.out
+	#python3 NumbER/utils/experiment_script.py --matching-solution $1 --datasets "x3_all"  --tag $2 --wandb #> output.out
+	python3 NumbER/matching_solutions/utils/similarity_calculation_complete.py
 }
 set -e
 eval "$(conda shell.bash hook)"

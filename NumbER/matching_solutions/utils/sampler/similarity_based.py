@@ -54,7 +54,8 @@ class SimilarityBasedSampler(BaseSampler):
         naive_sampler = NaiveSampler(self.records_path, self.goldstandard_path)
         print("LOading naive sampler with paths", self.records_path, self.goldstandard_path)
         train_records, valid_records, test_records, train_matches, valid_matches, test_matches = naive_sampler.sample_records(config)
-        # path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/books3_merged_no_isbn"
+        
+        # path = "/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/dm_amazon_google"
         # print("ITERATION", config["iteration"])
         # train_matches = pd.read_csv(f"{path}/samples/similarity/train_{config['iteration']}_goldstandard.csv")
         # test_matches = pd.read_csv(f"{path}/samples/similarity/test_{config['iteration']}_goldstandard.csv")
@@ -68,6 +69,7 @@ class SimilarityBasedSampler(BaseSampler):
         # test_records = test_records[test_records['id'].isin(test_matches['p1'].values) | test_records['id'].isin(test_matches['p2'].values)]
         # valid_records = pd.read_csv(f"{path}/features.csv")
         # valid_records = valid_records[valid_records['id'].isin(valid_matches['p1'].values) | valid_records['id'].isin(valid_matches['p2'].values)]
+
         print("Sampled records naiveley", train_records, valid_records, test_records, train_matches, valid_matches, test_matches)
         self.check_no_leakage(train_matches, valid_matches, test_matches)
         print(len(train_records), len(valid_records), len(test_records), len(train_matches), len(valid_matches), len(test_matches))

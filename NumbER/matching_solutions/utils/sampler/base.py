@@ -11,13 +11,17 @@ class BaseSampler(ABC):
 		self.records = pd.read_csv(records_path, index_col=None)
 		self.records = self.records.replace({'\t': ''}, regex=True)
 		self.records['id'] = self.records['id'].astype(float)
-		self.goldstandard = pd.read_csv(goldstandard_path, index_col=None)
 		self.records_path = records_path
-		self.goldstandard_path = goldstandard_path
-		if "prediction" in self.goldstandard.columns:
-			print("Prediction is inside of it. Filtering only the matching pairs")
-			self.goldstandard = self.goldstandard[self.goldstandard['prediction'] == 1]
-		print("Goldstandard dwad", self.goldstandard)
+		try:
+			self.goldstandard = pd.read_csv(goldstandard_path, index_col=None)
+			self.goldstandard_path = goldstandard_path
+			if "prediction" in self.goldstandard.columns:
+				print("Prediction is inside of it. Filtering only the matching pairs")
+				self.goldstandard = self.goldstandard[self.goldstandard['prediction'] == 1]
+			print("Goldstandard dwad", self.goldstandard)
+		except:
+			print("NO GROUNDTRUTH!")
+			self.goldstandard = None
 
 	def create_clusters(self, groundtruth):
 		print("Creating clusters")
@@ -57,11 +61,12 @@ class BaseSampler(ABC):
 			Formatter = MD2MFormat
 		elif output_format == 'embitto':
 			Formatter = EmbittoFormat
-
-		self.check_no_leakage(train_data, valid_data, test_data)
+		if self.name != "deep_matcher_datasets":
+			self.check_no_leakage(train_data, valid_data, test_data)
 		for data in [train_data, valid_data, test_data]:
 			print("CHECKING CORRECTNESS")
-			assert self.check_correctnesss(data)
+			if self.name != "deep_matcher_datasets":
+				assert self.check_correctnesss(data)
 			assert len(data.apply(lambda row: tuple(sorted((row['p1'], row['p2']))), axis=1).unique()) == len(data)
 			print("Amount of matching pairs", len(data[data['prediction'] == 1]))
 			print("Amount of non-matching pairs", len(data[data['prediction'] == 0]))

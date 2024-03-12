@@ -19,6 +19,7 @@ import wandb
 from NumbER.utils.experiment_config import experiment_configs, combinations
 from NumbER.matching_solutions.matching_solutions.evaluation.evaluator import Evaluator
 from NumbER.matching_solutions.utils.sampler.naive import NaiveSampler
+from NumbER.matching_solutions.utils.sampler.deep_matcher_samples import DeepMatcherBasedSampler
 
 def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iteration=None):
 	print("TAG", tag)
@@ -39,7 +40,8 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 		# torch.cuda.init()
 		# print(torch.cuda.memory_summary(device=None, abbreviated=False))
 		times = []
-		for i in range(5):#5):
+		iterations = 1 if paths['blocking']['sampler'] == DeepMatcherBasedSampler else 5
+		for i in range(iterations):#5):
 			print("DOING it for ", dataset, " run ", i)
 			wandb.init(
 				project="NumbER",
@@ -77,6 +79,15 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				elif matching_solution == "lightgbm":
 					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.lightgbm")
 					algorithm = getattr(module, "LightGBMMatchingSolution")
+				elif matching_solution == "xgboost":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.xgboost")
+					algorithm = getattr(module, "XGBoostMatchingSolution")
+				elif matching_solution == "ensemble_learner":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.ensemble_learner")
+					algorithm = getattr(module, "EnsembleLearnerMatchingSolution")
+				elif matching_solution == "combiner":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.combiner")
+					algorithm = getattr(module, "CombinerMatchingSolution")
 				else:
 					module = None
 				dataset_path = os.path.join(base_output_path, 'datasets', dataset)
@@ -119,7 +130,6 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 					config['train']['seed'] = 1
 					training_time = time.time()
 					print("Config", config['train'])
-					#raise Exception("Not implemented")
 					best_f1, model, threshold, train_time = solution.model_train(**config['train'])
 					wandb.log({'training_time': training_time - time.time()})
 					print(f"Predicting... Best f1 achieved: {best_f1}", file=sys.stdout)

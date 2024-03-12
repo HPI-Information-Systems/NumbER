@@ -109,7 +109,8 @@ if __name__ == '__main__':
 		# {'name': 'x2_numeric', 'columns': ["weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]},
 		# {'name': 'x3_numeric', 'columns': ["weight_lb","weight_oz","weight_kg","weight_g","brand_refine","cpu_brand_refine","core_refine","frequency_refine","storage_refine","ram_refine"]},
 	]
-    for dataset in ["x3_all"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
+    # ["dm_amazon_google",	"dm_beer_exp",  "dm_company",  "dm_dblp_acm",  "dm_dblp_acm_dirty",  "dm_dblp_scholar",  "dm_dblp_scholar_dirty",  "dm_fodors_zagat",  "dm_itunes_amazon",  "dm_itunes_amazon_dirty",  "dm_walmart_amazon",  "dm_walmart_amazon_dirty"]
+    for dataset in ["dm_amazon_google",	"dm_beer_exp",  "dm_dblp_acm",  "dm_dblp_acm_dirty","dm_walmart_amazon",  "dm_walmart_amazon_dirty"]:#os.listdir('/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/'):
         try:
             if os.path.exists(f'/hpi/fs00/share/fg-naumann/lukas.laskowski/datasets/{dataset}/similarity_cosine.npy') or dataset in ["books4_all", "2MASS", "books4_numeric", "baby_products_all_VORSICHT_ID"]:#
                 print("Already done", dataset)
