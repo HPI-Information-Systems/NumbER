@@ -3043,6 +3043,7 @@ experiment_configs = {
     'deep_matcher_2': {**sets['single_dblp_acm'], **sets['single_dblp_acm_dirty']},
     'deep_matcher_3': {**sets['single_amazon_google'], **sets['single_beer_exp']},
     'deep_matcher_4': {**sets['single_dblp_scholar'], **sets['single_dblp_scholar_dirty']},
+	'deep_matcher_dblp_scholar': {**sets['single_dblp_scholar_dirty']},
     'deep_matcher_5': {**sets['single_itunes_amazon'], **sets['single_itunes_amazon_dirty']},
     'deep_matcher_6': {**sets['single_walmart_amazon'], **sets['single_walmart_amazon_dirty']},
     'deep_matcher_all': {**sets['single_fodors_zagat'], **sets['single_abt_buy'],

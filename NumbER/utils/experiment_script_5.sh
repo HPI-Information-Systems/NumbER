@@ -22,9 +22,9 @@ eval "$(conda shell.bash hook)"
 cd /hpi/fs00/home/lukas.laskowski/Masterarbeit/NumbER
 
 run_experiment "ensemble_learner" $1
-run_experiment "combiner" $1
-run_experiment "embitto" $1
-run_experiment "ditto" $1
+# run_experiment "combiner" $1
+# run_experiment "embitto" $1
+# run_experiment "ditto" $1
 #run_experiment "deep_matcher" $1
 
 # run_experiment "embitto" $1

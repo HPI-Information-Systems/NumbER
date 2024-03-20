@@ -4,7 +4,7 @@ import seaborn as sns
 import numpy as np
 #df = pd.read_csv("./NumbER/scripts/runs_x3.csv")
 df = pd.read_csv("./NumbER/scripts/runs_combiner.csv")
-df = pd.read_csv("./NumbER/scripts/runs_single_dm.csv")
+# df = pd.read_csv("./NumbER/scripts/runs_single_dm.csv")
 #df = pd.read_csv("./NumbER/scripts/runs_holiday.csv")
 #df = pd.read_csv("./NumbER/scripts/runs_deep.csv")
 #df = pd.read_csv("./NumbER/scripts/runs_books3_merged.csv")
@@ -13,6 +13,7 @@ filter= {
 	#"batch_size": 50,
 	#"epochs": 40,
  	"matching_solution": "combiner",
+    "tags": "combiner"
 }
 filtered_df = df
 print(filtered_df["tags"].unique())
@@ -34,6 +35,9 @@ filtered_df['training_time'] = filtered_df['training_time'].apply(lambda x: -x/6
 #filtered_df = filtered_df[filtered_df["dataset"].isin(["2MASS_small_no_n", "baby_products_numeric", "books3_numeric", "books3_numeric_no_isbn", "earthquakes", "x2_numeric", "x3_numeric", "vsx_small","protein_small"])]
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["2MASS_small_no_n", "earthquakes", "vsx_small","protein_small"])]
 
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_beer_exp", "single_itunes_amazon", "single_fodors_zagat", "single_dblp_acm", "single_dblp_scholar", "single_amazon_google", "single_walmart_amazon"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_abt_buy"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_dblp_acm_dirty", "single_dblp_scholar_dirty", "single_itunes_amazon_dirty", "single_walmart_amazon_dirty"])]
 
 # filtered_df = filtered_df[filtered_df["dataset"].isin([ "baby_products_numeric","books3_numeric","x2_numeric","x3_numeric"])]
 # filtered_df = filtered_df[filtered_df["dataset"].isin([ "baby_products_all","books3_all","x2_all","x3_all"])]
@@ -43,6 +47,7 @@ filtered_df['training_time'] = filtered_df['training_time'].apply(lambda x: -x/6
 #filtered_df = filtered_df[filtered_df["dataset"].isin(["baby_products_numeric","books3_numeric","books3_numeric_no_isbn","x2_numeric","x3_numeric"])]
 
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["protein_small","earthquakes","vsx_small","2MASS_small_no_n", "baby_products_numeric","books3_numeric","x2_numeric","x3_numeric"])]#aggregate = filtered_df.groupby(["dataset", "state"]).agg({"f1_not_closed": ["mean", "std", "count"], "training_time": ["mean", "std"]})
+filtered_df = filtered_df[filtered_df["dataset"].isin(["protein_small","earthquakes","vsx_small","2MASS_small_no_n"])]#, "baby_products_numeric","books3_numeric","x2_numeric","x3_numeric"])]#aggregate = filtered_df.groupby(["dataset", "state"]).agg({"f1_not_closed": ["mean", "std", "count"], "training_time": ["mean", "std"]})
 print(filtered_df[filtered_df['dataset']=="books3_all"]['f1_not_closed'])
 aggregate = filtered_df.groupby(["dataset", "tags", "state"]).agg({"f1_not_closed": ["mean", "count"], "recall_not_closed": ["mean"], "precision_not_closed": ["mean"], "training_time": ["mean", "std"]})
 print("Runtime", aggregate["training_time"]["mean"].mean())

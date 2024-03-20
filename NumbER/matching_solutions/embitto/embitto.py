@@ -32,7 +32,7 @@ class Embitto(pl.LightningModule):
         self.learning_rate = learning_rate
         self.should_pretrain = should_pretrain
 
-    def forward(self, input_textual, input_numerical, phase: Phase):
+    def forward(self, input_textual, input_numerical, phase: Phase, get_hidden_stage=False):
         #output_numerical = self.numerical_component(input_numerical)
         #print(input_textual)
         #print("inputtextual", input_textual)
@@ -50,7 +50,9 @@ class Embitto(pl.LightningModule):
                 output_numerical = torch.cat((output_numerical_1, output_numerical_2), 0)
                 output_textual = self.textual_component(input_textual) if self.textual_component is not None else None
                 return self.fusion_component(output_textual, output_numerical)
+        #print("INPUT TEXTUA", input_textual)
         output_textual = self.textual_component(input_textual) if self.textual_component is not None and input_textual is not None else None
+
         if self.numerical_component is not None and self.textual_component is not None:
             output_numerical = self.numerical_component(input_numerical, phase)
             output = self.fusion_component(output_textual, output_numerical)
@@ -70,6 +72,8 @@ class Embitto(pl.LightningModule):
             #output = self.softmax(output)
         #embeddings = self.fusion_component(output_numerical, output_textual)
         #self.finetuning_step(embeddings)
+        if get_hidden_stage:
+            return output_textual
         return output
     
     def set_stage(self, stage: Stage):
@@ -82,8 +86,10 @@ class Embitto(pl.LightningModule):
             self.numerical_component.stage = stage
         
     def training_step(self, batch, batch_idx):
+        # print("BATCH", batch)
         textual_data, numerical_data, labels = batch
-        predictions = self(textual_data, numerical_data, Phase.TRAIN)
+        predictions = self(textual_data, numerical_data, Phase.TRAIN, True)
+        # print(predictions.mean(dim=1).cpu())
         loss = self.calculate_embedding_loss(predictions, labels, phase="train") if self.stage == Stage.PRETRAIN else self.criterion(input=predictions,target=labels)
         # if np.isnan(loss.cpu().detach().item()):
         #     print("Predictions", predictions)

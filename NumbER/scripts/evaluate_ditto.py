@@ -34,6 +34,10 @@ filtered_df = filtered_df.drop_duplicates(subset=['tags', 'dataset', 'run'])
 
 #print(filtered_df)
 filtered_df['training_time'] = filtered_df['training_time'].apply(lambda x: -x/60)
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_beer_exp", "single_itunes_amazon", "single_fodors_zagat", "single_dblp_acm", "single_dblp_scholar", "single_amazon_google", "single_walmart_amazon"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_abt_buy"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_dblp_acm_dirty", "single_dblp_scholar_dirty", "single_itunes_amazon_dirty", "single_walmart_amazon_dirty"])]
+
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["baby_products_all", "baby_products_combined", "books3_all", "books3_combined", "books3_all_no_isbn", "books3_combined_no_isbn", "x2_all", "x2_combined", "x3_all", "x3_combined"])]
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["baby_products_all", "baby_products_merged_new", "books3_all", "books3_merged","books3_merged_no_isbn", "books3_all_no_isbn", "x2_all", "x2_merged", "x3_all", "x3_merged"])]
 

@@ -11,21 +11,22 @@ df = pd.read_csv("./NumbER/scripts/runs_single_dm.csv") # experiments for qualit
  # pair_based_ditto_formatter, textual_prompt_formatter, complete_prompt_formatter, complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific,
     # text_sim_formatter, complete_prompt_formatter_min_max_scaled
     # textual_min_max_scaled, textual_scientific
+print(df[df['matching_solution'] == "embitto"])
 filter= {
-	'lr': 3e-5,
- 	'should_finetune': True,
-	'should_pretrain': False,
+	## 'lr': 3e-5,
+ 	# #'should_finetune': True,
+	# #'should_pretrain': False,
 	'matching_solution': 'embitto',
-	'finetune_batch_size': 50,
- 	'num_finetune_epochs': 40,
+	# #'finetune_batch_size': 50,
+ 	## 'num_finetune_epochs': 40,
 	#'num_pretrain_epochs': ??,
 	#'pretrain_batch_size': 50,
-	'output_embedding_size': 256,
+	## 'output_embedding_size': 256,
 	#'include_numerical_features_in_textual': True,
 	#'lm': 'roberta',
 	#'fp16': True,
 	#'max_len': 256,
-	'numerical_config_model': None,
+	#'numerical_config_model': None,
 	# 'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.value_embeddings.ValueValueEmbeddings",
 	#'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.value_embeddings.ValueBaseEmbeddings",
 	# 'numerical_config_model': "NumbER.matching_solutions.embitto.numerical_components.dice.DICEEmbeddingAggregator",
@@ -33,10 +34,10 @@ filter= {
 	# 'numerical_config_finetune_formatter': 'NumbER.matching_solutions.embitto.formatters.pair_based_numeric_formatter',
 	# 'numerical_config_pretrain_formatter': 'NumbER.matching_solutions.embitto.formatters.dummy_formatter',
 	# 'numerical_config_0': None,
-	'textual_config_model': 'NumbER.matching_solutions.embitto.textual_components.base_roberta.BaseRoberta',
-	'textual_config_max_length': 256,
-	# 'textual_config_embedding_size': 128,
-	'textual_config_finetune_formatter': 'NumbER.matching_solutions.embitto.formatters.complete_prompt_formatter',
+	# #'textual_config_model': 'NumbER.matching_solutions.embitto.textual_components.base_roberta.BaseRoberta',
+	## 'textual_config_max_length': 256,
+	## 'textual_config_embedding_size': 128,
+	# 'textual_config_finetune_formatter': 'NumbER.matching_solutions.embitto.formatters.complete_prompt_formatter',
 	#'textual_config_pretrain_formatter': ??,
 	#'textual_config_0': None, 
 }
@@ -75,7 +76,12 @@ filtered_df = filtered_df[filtered_df["dataset"] != "vsx_small_numeric"]
 
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["baby_products_numeric","books3_numeric","x2_numeric","x3_numeric"])]
 # filtered_df = filtered_df[filtered_df["dataset"].isin(["baby_products_all", "books3_all", "books3_merged", "x2_all", "x2_merged", "x3_all", "x3_merged", "books3_all_no_isbn", "books3_merged_no_isbn"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_beer_exp", "single_itunes_amazon", "single_fodors_zagat", "single_dblp_acm", "single_dblp_scholar", "single_amazon_google", "single_walmart_amazon"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_abt_buy"])]
+# filtered_df = filtered_df[filtered_df["dataset"].isin(["single_dblp_acm_dirty", "single_dblp_scholar_dirty", "single_itunes_amazon_dirty", "single_walmart_amazon_dirty"])]
 
+print(filtered_df[["dataset", "f1_not_closed"]])
+print(filtered_df[["f1_not_closed"]].mean())
 #print(filtered_df)
 filtered_df['training_time'] = filtered_df['training_time'].apply(lambda x: -x/60)
 aggregate = filtered_df.groupby(["dataset", "tags", "state"]).agg({"f1_not_closed": ["mean", "count"], "recall_not_closed": ["mean"], "precision_not_closed": ["mean"], "training_time": ["mean", "std"], "f1_closed": ["mean", "count"]})

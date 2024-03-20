@@ -2,6 +2,8 @@ from NumbER.matching_solutions.matching_solutions.matching_solution import Match
 import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, roc_curve
+from NumbER.matching_solutions.embitto.enums import Stage, Phase
+
 import random
 import xgboost as xgb
 from transformers import RobertaModel, RobertaTokenizer
@@ -12,12 +14,17 @@ from scipy.spatial.distance import cosine
 
 
 class XGBoostMatchingSolution(MatchingSolution):
-	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path):
+	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path, llm=None):
 		super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
 		model_name = 'roberta-base'
-		self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
-		self.model = RobertaModel.from_pretrained(model_name).to("cuda")
-		self.model.eval()
+		if llm == None:
+			self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+			self.model = RobertaModel.from_pretrained(model_name).to("cuda")
+			self.model.eval()
+		else:
+			self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+			self.model = llm
+			self.model.eval()
 		
 	def model_train(self, params, epochs, wandb_id, seed, i):
 		print("PARAMS", params)
@@ -77,7 +84,9 @@ class XGBoostMatchingSolution(MatchingSolution):
 		numeric_data = data[self.get_numeric_columns(data)]
 		if len(data.columns) != len(self.get_numeric_columns(data)):
 			textual_data = data[data.columns.difference(list(self.get_numeric_columns(data)))]
+			print(textual_data.columns)
 			for col in filter(lambda x: x.startswith("left"), textual_data.columns):
+				print(col)
 				col_1 = textual_data[col]
 				col_2 = textual_data[f"right_{col[5:]}"]
 				final_df[col[5:]] = self.calculate_similarities_for_column_pair(col_1, col_2)
@@ -87,9 +96,12 @@ class XGBoostMatchingSolution(MatchingSolution):
 	
 	def generate_batch_embeddings(self, texts):
 		inputs = self.tokenizer(texts.astype(str).values.tolist(), return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True).to("cuda")
+		self.model.to("cuda")
 		with torch.no_grad():
-			outputs = self.model(**inputs)
-		embeddings = outputs.last_hidden_state.mean(dim=1).cpu()  # Mean pooling across the token embeddings
+			#outputs = self.model(**inputs)
+			outputs = self.model(inputs['input_ids'], None, Phase.TEST, get_hidden_stage=True)
+		
+		embeddings = outputs.cpu()  # Mean pooling across the token embeddings
 		return embeddings
 	
 	def calculate_similarities_for_column_pair(self,col_1, col_2, batch_size=40):

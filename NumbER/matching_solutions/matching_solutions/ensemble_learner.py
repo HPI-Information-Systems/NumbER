@@ -39,11 +39,11 @@ class EnsembleLearnerMatchingSolution(MatchingSolution):
 		self.embitto = EmbittoMatchingSolution(self.dataset_name, self.train_path, self.valid_path, self.test_path)
 		number_numeric_cols = len(list(pd.read_csv(lgbm_train_path).drop(columns=['prediction', 'id'], errors="ignore").select_dtypes(include=['int16', 'int32', 'int64', 'float16', 'float32', 'float64']).columns))
 		number_other_cols = len(list(pd.read_csv(lgbm_train_path))) - number_numeric_cols
-		self.lightgbm = LightGBMMatchingSolution(self.dataset_name, lgbm_train_path, lgbm_valid_path, lgbm_test_path)
-		self.xgboost = XGBoostMatchingSolution(self.dataset_name, lgbm_train_path, lgbm_valid_path, lgbm_test_path)
 		
 		#self.aggregation_model = LightGBMMatchingSolution(self.dataset_name, lgbm_train_path, lgbm_valid_path, lgbm_test_path)
 		_, embitto_model, _, _ = self.embitto.model_train(numerical_config, wandb_id, include_numerical_features_in_textual, seed, textual_config, pretrain_batch_size, num_pretrain_epochs, finetune_batch_size, num_finetune_epochs, train_goldstandard_path, valid_goldstandard_path, test_goldstandard_path,i, use_statistical_model, use_as_feature,use_as_decider)
+		self.lightgbm = LightGBMMatchingSolution(self.dataset_name, lgbm_train_path, lgbm_valid_path, lgbm_test_path, llm=embitto_model)
+		self.xgboost = XGBoostMatchingSolution(self.dataset_name, lgbm_train_path, lgbm_valid_path, lgbm_test_path, llm=embitto_model)
 		if number_numeric_cols == 0:
 			return _, {'embitto': embitto_model}, _, _
 		_, lightgbm_model, _, _ = self.lightgbm.model_train(l_params, l_epochs, wandb_id, seed, i)

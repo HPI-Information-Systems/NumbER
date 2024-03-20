@@ -26,6 +26,10 @@ class BaseRoberta(nn.Module):
         #if self.stage == Stage.PRETRAIN:
             #input_sequence = [torch.tensor(self.tokenizer.encode(input, max_length=self.max_length, truncation=True)) for input in input_sequence]
             #input_sequence = self.pad_tensors(input_sequence, self.max_length) #todo check if abstract
+        #print(input_sequence)
+        # self.roberta.to("cuda")
+        # input_sequence.to("cuda")
+        # self.embeddings.to("cuda")
         outputs = self.roberta(
             input_sequence
         )

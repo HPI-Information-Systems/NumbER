@@ -1,5 +1,6 @@
 from NumbER.matching_solutions.matching_solutions.matching_solution import MatchingSolution
 from transformers import RobertaModel, RobertaTokenizer
+from NumbER.matching_solutions.embitto.enums import Stage, Phase
 import numpy as np
 import torch
 from scipy.spatial.distance import cosine
@@ -10,16 +11,21 @@ import lightgbm as lgb
 
 
 class LightGBMMatchingSolution(MatchingSolution):
-	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path, llm_train_predictions=None, llm_valid_predictions=None):
+	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path, llm_train_predictions=None, llm_valid_predictions=None, llm=None):
 		super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
 		self.llm_train_predictions = llm_train_predictions 
 		self.llm_valid_predictions = llm_valid_predictions
 		# word2vec_path = "/hpi/fs00/home/lukas.laskowski/gensim-data/word2vec-google-news-300/word2vec-google-news-300.gz"
 		# self.word_vectors = KeyedVectors.load_word2vec_format(word2vec_path, binary=True)
 		model_name = 'roberta-base'
+		# if llm == None:
+		# 	self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+		# 	self.model = RobertaModel.from_pretrained(model_name).to("cuda")
+		# 	self.model.eval()
+		# else:
 		self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
-		self.model = RobertaModel.from_pretrained(model_name).to("cuda")
-		self.model.eval()
+		self.model = llm
+		#self.model.eval()
 
 	def model_train(self, params, epochs, wandb_id, seed, i):
 		print("PARAMS", params)
@@ -35,6 +41,10 @@ class LightGBMMatchingSolution(MatchingSolution):
 		train_data = build_data(self.train_path, self.llm_train_predictions)
 		print("Train", train_data)
 		valid_data = build_data(self.valid_path, self.llm_valid_predictions)
+		print(params)
+		print(train_data)
+		print(epochs)
+		print(valid_data)
 		bst = lgb.train(params, train_data, epochs, valid_sets=[valid_data])
 		return None, bst, None, None
 
@@ -93,7 +103,10 @@ class LightGBMMatchingSolution(MatchingSolution):
 		final_df = pd.DataFrame()
 		numeric_data = data[self.get_numeric_columns(data)]
 		if len(data.columns) != len(self.get_numeric_columns(data)):
+			print("numeric cl", self.get_numeric_columns(data))
+			print("all cl", data.columns)
 			textual_data = data[data.columns.difference(list(self.get_numeric_columns(data)))]
+			print("textu", textual_data)
 			for col in filter(lambda x: x.startswith("left"), textual_data.columns):
 				col_1 = textual_data[col]
 				col_2 = textual_data[f"right_{col[5:]}"]
@@ -104,9 +117,10 @@ class LightGBMMatchingSolution(MatchingSolution):
 	
 	def generate_batch_embeddings(self, texts):
 		inputs = self.tokenizer(texts.astype(str).values.tolist(), return_tensors="pt", padding=True, truncation=True, max_length=512, return_attention_mask=True).to("cuda")
+		self.model.to("cuda")
 		with torch.no_grad():
-			outputs = self.model(**inputs)
-		embeddings = outputs.last_hidden_state.mean(dim=1).cpu()  # Mean pooling across the token embeddings
+			outputs = self.model(inputs['input_ids'], None, Phase.TEST, get_hidden_stage=True)
+		embeddings = outputs.cpu()  # Mean pooling across the token embeddings
 		return embeddings
 	
 	def calculate_similarities_for_column_pair(self,col_1, col_2, batch_size=40):
@@ -139,8 +153,6 @@ class LightGBMMatchingSolution(MatchingSolution):
 		if not valid_words:
 			# If no words are valid, return a zero vector
 			return np.zeros(model.vector_size)
-		
-		# Compute average embedding
 		embeddings = [model[word] for word in valid_words]
 		average_embedding = np.mean(embeddings, axis=0)
 		return average_embedding

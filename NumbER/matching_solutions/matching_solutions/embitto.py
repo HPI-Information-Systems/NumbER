@@ -152,7 +152,6 @@ class EmbittoMatchingSolution(MatchingSolution):
 				lgb_valid_predictions = self.lgbm.model_predict(lgbm_model, mode="valid",llm_train_data=llm_train_predictions, llm_valid_data=llm_valid_predictions)['scores']
 				return None, [embitto, lgbm_model], None, None
 				
-
 		return None, [embitto, lgbm_model, aggregator_model] if use_statistical_model else embitto, None, None
 
 	def model_predict(self, model, cluster, train_goldstandard_path, valid_goldstandard_path, test_goldstandard_path, use_statistical_model, use_as_feature, use_as_decider):
@@ -273,6 +272,9 @@ class EmbittoMatchingSolution(MatchingSolution):
 		trainer = pl.Trainer()
 		valid = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.valid_data, stage=Stage.FINETUNING)
 		return torch.cat(trainer.predict(model, valid), dim=0).float().softmax(dim=1)[:, 1]	
+	def predict_inner_value(self, data):
+		
+		return 
 	def model_predict_train(self, model):
 		trainer = pl.Trainer()
 		train = EmbittoDataModule(train_data=self.train_data, valid_data=self.valid_data, test_data=self.test_data, predict_data=self.train_data, stage=Stage.FINETUNING)
