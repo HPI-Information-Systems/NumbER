@@ -17,14 +17,14 @@ class XGBoostMatchingSolution(MatchingSolution):
 	def __init__(self, dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path, llm=None):
 		super().__init__(dataset_name, train_dataset_path, valid_dataset_path, test_dataset_path)
 		model_name = 'roberta-base'
-		if llm == None:
-			self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
-			self.model = RobertaModel.from_pretrained(model_name).to("cuda")
-			self.model.eval()
-		else:
-			self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
-			self.model = llm
-			self.model.eval()
+		# if llm == None:
+		# 	self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+		# 	self.model = RobertaModel.from_pretrained(model_name).to("cuda")
+		# 	self.model.eval()
+		# else:
+		# 	self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+		# 	self.model = llm
+		# 	self.model.eval()
 		
 	def model_train(self, params, epochs, wandb_id, seed, i):
 		print("PARAMS", params)
@@ -86,6 +86,8 @@ class XGBoostMatchingSolution(MatchingSolution):
 			textual_data = data[data.columns.difference(list(self.get_numeric_columns(data)))]
 			print(textual_data.columns)
 			for col in filter(lambda x: x.startswith("left"), textual_data.columns):
+				print("SKIPPING TEXTUAL COLUMNS.")
+				continue
 				print(col)
 				col_1 = textual_data[col]
 				col_2 = textual_data[f"right_{col[5:]}"]

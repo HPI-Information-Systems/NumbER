@@ -23,8 +23,8 @@ class LightGBMMatchingSolution(MatchingSolution):
 		# 	self.model = RobertaModel.from_pretrained(model_name).to("cuda")
 		# 	self.model.eval()
 		# else:
-		self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
-		self.model = llm
+		# self.tokenizer = RobertaTokenizer.from_pretrained(model_name)
+		# self.model = llm
 		#self.model.eval()
 
 	def model_train(self, params, epochs, wandb_id, seed, i):
@@ -108,6 +108,8 @@ class LightGBMMatchingSolution(MatchingSolution):
 			textual_data = data[data.columns.difference(list(self.get_numeric_columns(data)))]
 			print("textu", textual_data)
 			for col in filter(lambda x: x.startswith("left"), textual_data.columns):
+				print("SKIPPING TEXTUAL COLUMNS.")
+				continue
 				col_1 = textual_data[col]
 				col_2 = textual_data[f"right_{col[5:]}"]
 				final_df[col[5:]] = self.calculate_similarities_for_column_pair(col_1, col_2)

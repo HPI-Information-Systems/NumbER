@@ -14,6 +14,7 @@ from torch import nn
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, TensorDataset
+from scipy.optimize import maximize
 from sklearn.model_selection import train_test_split
 
 class EnsembleLearnerMatchingSolution(MatchingSolution):
@@ -62,21 +63,27 @@ class EnsembleLearnerMatchingSolution(MatchingSolution):
 		valid_data = xgb.DMatrix(df_valid.drop(columns=['prediction'], errors="ignore").to_numpy(), label=valid_label)
 		train_data = xgb.DMatrix(df_train.drop(columns=['prediction'], errors="ignore").to_numpy(), label=train_label)
   
-		train_tensor = TensorDataset(torch.Tensor(df_train.drop(columns=['prediction'], errors="ignore").to_numpy()), torch.LongTensor(train_label))
-		train_loader = DataLoader(train_tensor, batch_size=32, shuffle=True)
-		dl_aggregator_model = SimpleNN()
-		self.agg_trainer = Trainer(max_epochs=10)
-		self.agg_trainer.fit(dl_aggregator_model, train_loader)
+		#dl aggregator
+		#train_tensor = TensorDataset(torch.Tensor(df_train.drop(columns=['prediction'], errors="ignore").to_numpy()), torch.LongTensor(train_label))
+		#train_loader = DataLoader(train_tensor, batch_size=32, shuffle=True)
+		#dl_aggregator_model = SimpleNN()
+		#self.agg_trainer = Trainer(max_epochs=10)
+		#self.agg_trainer.fit(dl_aggregator_model, train_loader)
 		aggregator_model = xgb.train(x_params, train_data, x_epochs)
-		val_tensor = torch.Tensor(df_valid.drop(columns=['prediction'], errors="ignore").to_numpy())
-		valid_tensor = TensorDataset(val_tensor)
-		valid_loader = DataLoader(valid_tensor, batch_size=32)
-		valid_pred = torch.cat(self.agg_trainer.predict(dl_aggregator_model, valid_loader), dim=0).flatten().numpy()
+		aggregator_model = xgb.train(x_params, valid_data, x_epochs)
+		dl_aggregator_model = None
+		valid_pred = aggregator_model.predict(valid_data)
+		#dl
+		#val_tensor = torch.Tensor(df_valid.drop(columns=['prediction'], errors="ignore").to_numpy())
+		#valid_tensor = TensorDataset(val_tensor)
+		#valid_loader = DataLoader(valid_tensor, batch_size=32)
+		#valid_pred = torch.cat(self.agg_trainer.predict(aggregator_model, valid_loader), dim=0).flatten().numpy()
 		#valid_pred = torch.cat(self.agg_trainer.predict(dl_aggregator_model, valid_loader), dim=0).float().softmax(dim=1)[:, 1]
 		#valid_pred = aggregator_model.predict(xgb.DMatrix(df_valid.drop(columns=['prediction', 'id'], errors="ignore").to_numpy()))
 		
 		# train_pred = aggregator_model.predict(xgb.DMatrix(df_train.drop(columns=['prediction'], errors="ignore").to_numpy()))
 
+		#dl
 		_, _, thresholds = roc_curve(valid_label, valid_pred)
 		optimal_idx = np.argmax([f1_score(valid_label, valid_pred >= thresh) for thresh in thresholds])
 		optimal_threshold = thresholds[optimal_idx]
@@ -92,13 +99,16 @@ class EnsembleLearnerMatchingSolution(MatchingSolution):
 		lightgbm_prediction = self.lightgbm.model_predict(model['lightgbm'])
 		xgboost_prediction = self.xgboost.model_predict(model['xgboost'])
 		df = pd.DataFrame({'embitto': embitto_prediction['predict'][0]['score'],'lightgbm': lightgbm_prediction['predict'][0]['score'], 'xgboost': xgboost_prediction['predict'][0]['score']})
-		test_tensor = TensorDataset(torch.Tensor(df.drop(columns=['prediction'], errors="ignore").to_numpy()))
-		test_loader = DataLoader(test_tensor, batch_size=32)
-
-		#ypred = model['aggregator_model'].predict(xgb.DMatrix(df.to_numpy()))
+		#test_tensor = TensorDataset(torch.Tensor(df.drop(columns=['prediction'], errors="ignore").to_numpy()))
+		#test_loader = DataLoader(test_tensor, batch_size=32)
+		ypred = model['aggregator_model'].predict(xgb.DMatrix(df.to_numpy()))
 		#pred = self.agg_trainer.predict(model['dl_aggregator_model'], test_loader)
-		ypred = torch.cat(self.agg_trainer.predict(model['dl_aggregator_model'], test_loader), dim=0).flatten().numpy()
+		#dl
+		#ypred = torch.cat(self.agg_trainer.predict(model['dl_aggregator_model'], test_loader), dim=0).flatten().numpy()
+		#ypred = torch.cat(self.agg_trainer.predict(model['aggregator_model'], test_loader), dim=0).flatten().numpy()
+		
 		#ypred = torch.cat(pred, dim=0).flatten().numpy()
+		
 		result = pd.DataFrame({'score': ypred})
 		result['prediction'] = 0
 		result.loc[result['score']>model['thresholds'], 'prediction'] = 1
