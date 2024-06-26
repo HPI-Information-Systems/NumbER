@@ -156,8 +156,9 @@ class DummyFormat(OutputFormat):
                 'lightgbm': DeepMatcherFormat,
                 'xgboost': DeepMatcherFormat,
                 'ensemble_learner': EmbittoFormat,
-                'combiner': EmbittoFormat
+                'combiner': EmbittoFormat,
+                'gaussian': EmbittoFormat
             }
             return mapping[self.output_format](self.goldstandard, self.records).write_to_file(os.path.join(pathlib.Path(filepath).parent, pathlib.Path(filepath).stem))
         
-        return filepath, goldstandard_path if self.output_format in ["embitto", "ensemble_learner", "combiner"] else None
+        return filepath, goldstandard_path if self.output_format in ["embitto", "ensemble_learner", "combiner", "gaussian"] else None

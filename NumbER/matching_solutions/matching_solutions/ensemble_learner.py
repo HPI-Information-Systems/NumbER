@@ -14,7 +14,6 @@ from torch import nn
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader, TensorDataset
-from scipy.optimize import maximize
 from sklearn.model_selection import train_test_split
 
 class EnsembleLearnerMatchingSolution(MatchingSolution):

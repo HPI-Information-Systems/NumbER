@@ -88,6 +88,9 @@ def main(matching_solution, dataset_config, use_wandb, tag, dataset=None, iterat
 				elif matching_solution == "combiner":
 					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.combiner")
 					algorithm = getattr(module, "CombinerMatchingSolution")
+				elif matching_solution == "gaussian":
+					module = importlib.import_module("NumbER.matching_solutions.matching_solutions.gaussian")
+					algorithm = getattr(module, "GaussianMatchingSolution")
 				else:
 					module = None
 				dataset_path = os.path.join(base_output_path, 'datasets', dataset)

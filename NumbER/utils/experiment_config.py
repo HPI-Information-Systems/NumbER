@@ -7,7 +7,9 @@ from NumbER.matching_solutions.embitto.numerical_components.value_embeddings imp
 from NumbER.matching_solutions.embitto.numerical_components.numeric_roberta import NumericRoberta
 from NumbER.matching_solutions.embitto.textual_components.base_roberta import BaseRoberta
 from NumbER.matching_solutions.combiner.textual_components.base_roberta import BaseRoberta as CombinerBaseRoberta
+from NumbER.matching_solutions.gaussian.textual_components.base_roberta import BaseRoberta as GaussianBaseRoberta
 from NumbER.matching_solutions.embitto.formatters import dummy_formatter, pair_based_ditto_formatter,textual_prompt_formatter, complete_prompt_formatter, ditto_formatter, numeric_prompt_formatter, pair_based_numeric_formatter, complete_prompt_formatter_min_max_scaled,complete_prompt_formatter_scientific, pair_based_ditto_formatter_scientific, text_sim_formatter, textual_scientific, textual_min_max_scaled, num_text_sim_formatter
+from NumbER.matching_solutions.gaussian.formatters import complete_prompt_formatter as gaussian_formatter
 
 embitto_only_textual = {
 				"train": {
@@ -83,6 +85,26 @@ combiner = {
 							"max_length": 256,
 							"embedding_size": 128,
 							"finetune_formatter": complete_prompt_formatter},
+		"finetune_batch_size": 50,
+		"num_finetune_epochs": 40,#30
+		"lr": 3e-5,
+		"include_numerical_features_in_textual": True,
+        'l_epochs': 50,
+        'l_params': {'num_leaves': 31, 'objective': 'binary', "metric": "auc"},
+        'x_epochs': 50,
+        'x_params': {"objective":"binary:logistic",'colsample_bytree': 0.3,'learning_rate': 0.1,'max_depth': 5, 'alpha': 10},
+	},
+    "test": {
+	}
+}
+
+gaussian = {
+    "train": {
+        "textual_config":{
+							"model": GaussianBaseRoberta,
+							"max_length": 256,
+							"embedding_size": 256,
+							"finetune_formatter": gaussian_formatter},
 		"finetune_batch_size": 50,
 		"num_finetune_epochs": 40,#30
 		"lr": 3e-5,
@@ -491,6 +513,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -540,6 +563,7 @@ sets = {
  "books3_numeric": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
 			"ensemble_learner": ensemble_learner,
             "lightgbm": lightgbm_standard,
@@ -595,6 +619,7 @@ sets = {
     "x3_numeric": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
 			"ensemble_learner": ensemble_learner,
             "lightgbm": lightgbm_standard,
@@ -656,6 +681,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -693,6 +719,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -729,7 +756,8 @@ sets = {
 			"embitto": embitto_only_textual,
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
-            "combiner": combiner,
+            "combiner": combiner,#
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -767,6 +795,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -804,6 +833,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -841,6 +871,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -878,6 +909,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -915,6 +947,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -952,6 +985,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -989,6 +1023,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1026,6 +1061,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+			"gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1063,6 +1099,7 @@ sets = {
             "xgboost": xgboost_standard,
             "ensemble_learner": ensemble_learner,
             "combiner": combiner,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1104,6 +1141,7 @@ sets = {
             "ensemble_learner": ensemble_learner,
             "lightgbm": lightgbm_standard,
 			 "xgboost": xgboost_standard,
+             "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1158,6 +1196,7 @@ sets = {
 		"config": {
              "combiner": combiner,
 			"embitto": embitto_only_textual,
+            "gaussian": gaussian,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
 				"train": {
@@ -1209,6 +1248,7 @@ sets = {
 		"config": {
              "combiner": combiner,
 			"embitto": embitto_only_textual,
+            "gaussian": gaussian,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
 				"train": {
@@ -1260,6 +1300,7 @@ sets = {
 		"config": {
              "combiner": combiner,
 			"embitto": embitto_only_textual,
+            "gaussian": gaussian,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
 				"train": {
@@ -1310,6 +1351,7 @@ sets = {
      "baby_products_all": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
@@ -1364,6 +1406,7 @@ sets = {
     "x3_merged": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
 			"ditto": {
 				"train": {
@@ -1465,6 +1508,7 @@ sets = {
 	  "x2_all": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
             "ensemble_learner": ensemble_learner, 
 			"ditto": {
@@ -1501,6 +1545,7 @@ sets = {
     "x2_merged": {
 		"config": {
 			 "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
 			"ensemble_learner": ensemble_learner,
 			"ditto": {
@@ -1541,6 +1586,7 @@ sets = {
 			"embitto": embitto_only_textual,
             "ensemble_learner": ensemble_learner,
              "combiner": combiner,
+             "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1591,6 +1637,7 @@ sets = {
 		"config": {
 			"embitto": embitto_only_textual,
              "combiner": combiner,
+             "gaussian": gaussian,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
 				"train": {
@@ -1643,6 +1690,7 @@ sets = {
 	"x2_merged": {
 		"config": {
 			 "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
 			"ensemble_learner": ensemble_learner,
 			"ditto": {
@@ -1680,6 +1728,7 @@ sets = {
 		"config": {
 			"embitto": embitto_only_textual,
              "combiner": combiner,
+             "gaussian": gaussian,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
 				"train": {
@@ -1730,6 +1779,7 @@ sets = {
 	"baby_products_merged_new": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
@@ -1783,6 +1833,7 @@ sets = {
     "x3_numeric": {
 		"config": {
 			"embitto": embitto_only_textual,
+            "gaussian": gaussian,
 			"ditto": {
 				"train": {
 					"batch_size": 50,
@@ -1832,6 +1883,7 @@ sets = {
     "x3_merged": {
 		"config": {
              "combiner": combiner,
+             "gaussian": gaussian,
 			"embitto": embitto_only_textual,
             "ensemble_learner": ensemble_learner,
 			"ditto": {
